@@ -8,7 +8,7 @@ public partial class RegistrationPage : ContentPage
 {
     private bool _isDarktheme = false;
     private readonly SslClientService _tcpService;
-
+    //djfhjdhfdjhf
     public RegistrationPage()
     {
         InitializeComponent();
