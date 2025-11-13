@@ -1,6 +1,9 @@
 using CommunityToolkit.Maui.Extensions;
 using System.Net.Mail;
+using System.Text.Json;
 using Wolfie.Helpers;
+using Wolfie.Models;
+using Wolfie.Popups;
 using Wolfie.Services;
 
 namespace Wolfie.Pages;
@@ -27,18 +30,22 @@ public partial class LoginPage : ContentPage
 
     private async void OnMessageReceived(string msg)
     {
+        var packet = JsonSerializer.Deserialize<GetJsonPackage>(msg);
         await MainThread.InvokeOnMainThreadAsync(async () =>
         {
 
-            switch (msg)
+            switch (packet.status.ToLower().Trim())
             {
-                case "ERROR;LOGIN_FAILED;INVALID_CREDENTIALS":
-                    await DisplayAlertAsync("Ошибка", "Почта или пароль не правильные", "Ок");
+                case "error":
+                    if(packet.data.GetProperty("error").GetString().ToLower().Trim() == "invalid_credentials")//INVALID_CREDENTIALS
+                        { await DisplayAlertAsync("Ошибка", "Почта или пароль не правильные", "Ок"); }
                     break;
-                default:
-                    await DisplayAlertAsync("Успех", "Регистрация выполнена!", "Войти");
+                case "success":
+                    if (packet.data.GetProperty("error").GetString().ToLower().Trim() == "log_ok")//INVALID_CREDENTIALS
+                    { await DisplayAlertAsync("Успех", "Регистрация выполнена!", "Войти"); }
                     //var popup = new EmailCodeVerifPopup();
                     //await this.ShowPopupAsync(popup);
+
                     break;
             }
         });
@@ -47,10 +54,9 @@ public partial class LoginPage : ContentPage
     private async void LoginButtonClicked(object sender, EventArgs e)
     {
         string email = EmailEntry.Text?.Trim();
-        string password = PasswordEntry.Text;
-        string dataMessage = $"login_data ; {email} ; {password}";
+        string pass = PasswordEntry.Text;
 
-        if (string.IsNullOrWhiteSpace(password) || string.IsNullOrWhiteSpace(email))
+        if (string.IsNullOrWhiteSpace(pass) || string.IsNullOrWhiteSpace(email))
         {
             await DisplayAlertAsync("Error", "Все поля должны быть заполнены", "ok");
             return;
@@ -69,7 +75,12 @@ public partial class LoginPage : ContentPage
         }
         try
         {
-            await _tcpService.SendAsync(dataMessage);
+            await _tcpService.SendJsonAsync("login_data", new 
+            {
+                mail = email,
+                password = pass
+            });
+
         }
         catch (Exception er)
         {
@@ -140,26 +151,26 @@ public partial class LoginPage : ContentPage
 
     }
 
-    //async void RegistrationButtonClicked(object sender, EventArgs e)
-    //{
-    //    await Shell.Current.GoToAsync(nameof(RegistrationPage));
-    //}
+    async void RegistrationButtonClicked(object sender, EventArgs e)
+    {
+        await Shell.Current.GoToAsync(nameof(RegistrationPage));
+    }
 
-    //private async void OnTermsTapped(object sender, EventArgs e)
-    //{
-    //    var popup = new TermsPopup();
-    //    await this.ShowPopupAsync(popup);
-    //}
-
-    //private async void OnPrivacyTapped(object sender, EventArgs e)
-   // {
-    //    var popup = new PrivacyPopup();
-    //    await this.ShowPopupAsync(popup);
-   // }
-
-    //private async void ForgotPasswordCkicked(object sender, EventArgs e)
-    //{
-    //    var popup = new ForgotPassPopup();
-    //    await this.ShowPopupAsync(popup);
-    //}
+    private async void OnTermsTapped(object sender, EventArgs e)
+    {
+        var popup = new TermsPopup();
+        await this.ShowPopupAsync(popup);
+    }
+    
+    private async void OnPrivacyTapped(object sender, EventArgs e)
+    {
+        var popup = new PrivacyPopup();
+        await this.ShowPopupAsync(popup);
+    }
+    
+    private async void ForgotPasswordCkicked(object sender, EventArgs e)
+    {
+        var popup = new ForgotPassPopup();
+        await this.ShowPopupAsync(popup);
+    }
 }

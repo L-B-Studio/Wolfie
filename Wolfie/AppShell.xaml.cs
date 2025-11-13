@@ -1,4 +1,5 @@
 ﻿using Wolfie.Pages;
+using Wolfie.Popups;
 
 namespace Wolfie
 {
@@ -11,6 +12,8 @@ namespace Wolfie
             Routing.RegisterRoute(nameof(RegistrationPage), typeof(RegistrationPage));
 
             Routing.RegisterRoute(nameof(LoginPage), typeof(LoginPage));
+
+            Routing.RegisterRoute(nameof(EmailCodeVerifPopup), typeof(EmailCodeVerifPopup));
         }
     }
 }

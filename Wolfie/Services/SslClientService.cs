@@ -1,9 +1,10 @@
-﻿using System;
-using System.Collections.Generic;
+﻿
 using System.Net.Security;
 using System.Net.Sockets;
 using System.Security.Cryptography.X509Certificates;
 using System.Text;
+using System.Text.Json;
+using Wolfie.Models;
 
 namespace Wolfie.Services
 {
@@ -19,7 +20,8 @@ namespace Wolfie.Services
 
         private readonly TimeSpan _reconnectDelay = TimeSpan.FromSeconds(5);
 
-        private readonly string _host = "213.231.4.165";
+        //private readonly string _host = "213.231.4.165";
+        private readonly string _host = "192.168.168.118";
         private readonly int _port = 1234;
 
         private bool _isConnecting = false;
@@ -171,23 +173,40 @@ namespace Wolfie.Services
             await EnsureConnectedAsync();
         }
 
-        public async Task SendAsync(string message)
+        //public async Task SendAsync(string message)
+        //{
+        //    await EnsureConnectedAsync();
+        //
+        //    if (_writer == null)
+        //        throw new InvalidOperationException("Not connected to server");
+        //
+        //    await _sendLock.WaitAsync();
+        //    try
+        //    {
+        //        await _writer.WriteLineAsync(message);
+        //    }
+        //    finally
+        //    {
+        //        _sendLock.Release();
+        //    }
+        //}
+
+        public async Task SendJsonAsync(string command, object data)
         {
             await EnsureConnectedAsync();
 
-            if (_writer == null)
-                throw new InvalidOperationException("Not connected to server");
+            var packet = new SendJsonPackage
+            {
+                command = command,
+                data = data
+            };
 
-            await _sendLock.WaitAsync();
-            try
-            {
-                await _writer.WriteLineAsync(message);
-            }
-            finally
-            {
-                _sendLock.Release();
-            }
+            string json = JsonSerializer.Serialize(packet);
+
+            // Отправляем JSON + перенос строки
+            await _writer.WriteLineAsync(json);
         }
+
 
         public async Task DisconnectAsync()
         {

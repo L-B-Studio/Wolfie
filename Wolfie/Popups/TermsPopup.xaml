@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<toolkit:Popup
+    xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+    xmlns:toolkit="http://schemas.microsoft.com/dotnet/2022/maui/toolkit"
+    x:Class="Wolfie.Popups.TermsPopup">
+
+    <Border Padding="20" BackgroundColor="White" WidthRequest="410">
+        <VerticalStackLayout Spacing="12">
+
+            <Label Text="Политика конфиденциальности"
+                   FontSize="22" FontAttributes="Bold"
+                   HorizontalOptions="Center" />
+
+            <!-- Заголовки вкладок (кнопки) -->
+            <HorizontalStackLayout Spacing="6" HorizontalOptions="Fill">
+                <Button Text="Общее" x:Name="TabBtnGeneral" Clicked="OnTabHeaderClicked" />
+                <Button Text="Данные" x:Name="TabBtnData" Clicked="OnTabHeaderClicked" />
+                <Button Text="Использование" x:Name="TabBtnUsage" Clicked="OnTabHeaderClicked" />
+                <Button Text="Права" x:Name="TabBtnRights" Clicked="OnTabHeaderClicked" />
+            </HorizontalStackLayout>
+
+            <!-- CarouselView как «контент вкладок» -->
+            <CarouselView x:Name="TabsCarousel" HeightRequest="440" IndicatorView="indicator">
+                <CarouselView.ItemsSource>
+                    <x:Array Type="{x:Type x:String}">
+                        <x:String>general</x:String>
+                        <x:String>data</x:String>
+                        <x:String>usage</x:String>
+                        <x:String>rights</x:String>
+                    </x:Array>
+                </CarouselView.ItemsSource>
+
+                <CarouselView.ItemTemplate>
+                    <DataTemplate>
+                        <ScrollView>
+                            <VerticalStackLayout Padding="6" Spacing="10">
+                                <ContentView>
+                                    <ContentView.Content>
+                                        <StackLayout>
+                                            <!-- Содержимое каждой вкладки определяется через привязку значения Item -->
+                                            <Label FontSize="15">
+                                                <Label.Text>
+                                                    <!-- используем разметку, чтобы не ломать XML -->
+                                                    <![CDATA[
+                                                        Здесь текст вкладки. В production можно заменить динамически в code-behind по значению BindingContext.
+                                                    ]]>
+                                                </Label.Text>
+                                            </Label>
+                                        </StackLayout>
+                                    </ContentView.Content>
+                                </ContentView>
+                            </VerticalStackLayout>
+                        </ScrollView>
+                    </DataTemplate>
+                </CarouselView.ItemTemplate>
+            </CarouselView>
+
+            <IndicatorView x:Name="indicator" HorizontalOptions="Center" />
+
+        </VerticalStackLayout>
+    </Border>
+</toolkit:Popup>

@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<toolkit:Popup xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+              xmlns:toolkit="http://schemas.microsoft.com/dotnet/2022/maui/toolkit"
+             x:Class="Wolfie.Popups.ForgotPassPopup"
+             >
+    <Border
+        WidthRequest="500"
+        HeightRequest="330"
+        Padding="15"
+        BackgroundColor="White"
+        HorizontalOptions="Center"
+        VerticalOptions="Center">
+
+        <VerticalStackLayout Spacing="20">
+            <Grid ColumnSpacing="10" HorizontalOptions="Center">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="*"/>
+                </Grid.RowDefinitions>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="*"/>
+                </Grid.ColumnDefinitions>
+                <Label Text="OnlyGram" 
+               FontSize="24" 
+               FontAttributes="Bold" 
+               TextColor="Black"
+               Grid.Row="0"
+               Grid.Column="1"/>
+                <Label Text="by LB Studio" 
+               FontSize="12" 
+               FontAttributes="Bold" 
+               TextColor="Black" 
+               HorizontalOptions="End"
+               Grid.Row="1"
+               Grid.Column="1"/>
+
+            </Grid>
+
+            <Label Text="Востановление аккаунта" FontSize="20" FontAttributes="Bold" HorizontalOptions="Center" TextColor="Black"/>
+
+            <Label Text="Почта : " FontAttributes="Bold" FontSize="16" HorizontalOptions="Start" TextColor="Black" Margin="20,0,0,0"/>
+
+            <Entry x:Name="EmailEntry"
+                   Placeholder="example@gmail.com"
+                   Keyboard="Email"
+                   PlaceholderColor="Gray"
+                   BackgroundColor="#F5F5F5"
+                   TextColor="Black"
+                   HeightRequest="48"/>
+            <Button Text="Зарегистрироваться"
+                    BackgroundColor="Black"
+                    TextColor="White"
+                    CornerRadius="8"
+                    HeightRequest="48"
+                    Clicked="SendCodeButtonClicked"/>
+        </VerticalStackLayout>
+
+    </Border>
+</toolkit:Popup>

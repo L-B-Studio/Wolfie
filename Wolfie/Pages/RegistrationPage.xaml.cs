@@ -1,5 +1,8 @@
 ﻿using CommunityToolkit.Maui.Extensions;
+using System.Text.Json;
 using Wolfie.Helpers;
+using Wolfie.Models;
+using Wolfie.Popups;
 using Wolfie.Services;
 
 namespace Wolfie.Pages;
@@ -8,7 +11,6 @@ public partial class RegistrationPage : ContentPage
 {
     private bool _isDarktheme = false;
     private readonly SslClientService _tcpService;
-    //djfhjdhfdjhf
     public RegistrationPage()
     {
         InitializeComponent();
@@ -31,7 +33,7 @@ public partial class RegistrationPage : ContentPage
         string againPass = PasswordAgainEntry.Text;
         DateTime birthday = BirthdayDatePicker.Date ?? DateTime.Now;
 
-        string dataMessage = $"registration_data;{username};{email};{createPass};{birthday:yyyy-MM-dd}";
+        //string dataMessage = $"registration_data;{username};{email};{createPass};{birthday:yyyy-MM-dd}";
 
         if (string.IsNullOrWhiteSpace(username) ||
             string.IsNullOrWhiteSpace(email) ||
@@ -80,7 +82,12 @@ public partial class RegistrationPage : ContentPage
 
         try
         {
-            await _tcpService.SendAsync(dataMessage);
+            await _tcpService.SendJsonAsync("registration_data", new {
+                name = username,
+                mail = email,
+                password = createPass,
+                born = birthday
+            });
         }
         catch
         {
@@ -90,21 +97,27 @@ public partial class RegistrationPage : ContentPage
 
     private async void OnMessageReceived(string msg)
     {
+        var packet = JsonSerializer.Deserialize<GetJsonPackage>(msg);
         await MainThread.InvokeOnMainThreadAsync(async () =>
         {
-            switch (msg)
+            switch (packet.status.ToLower().Trim())
             {
-                case "ERROR;REG_FAILED;EMAIL_EXISTS":
-                    await DisplayAlertAsync("Ошибка", "Почта уже зарегистрирована", "Ок");
+                case "error":
+                    if (packet.data.GetProperty("error").GetString().ToLower().Trim() == "email_exists")
+                        { await DisplayAlertAsync("Ошибка", "Почта уже зарегистрирована", "Ок"); }
+                    else if (packet.data.GetProperty("error").GetString().ToLower().Trim() == "username_exists")
+                    {
+                        await DisplayAlertAsync("Ошибка", "Имя пользователя занято", "Ок");
+                    }
                     break;
-
-                case "ERROR;REG_FAILED;USERNAME_EXISTS":
-                    await DisplayAlertAsync("Ошибка", "Имя пользователя занято", "Ок");
+                case "success":
+                    if (packet.data.GetProperty("message").GetString().ToLower().Trim() == "reg_ok")
+                    {
+                        await DisplayAlertAsync("Успех", "Регистрация выполнена!", "Войти");
+                        await Navigation.PushAsync(new LoginPage());
+                    }
                     break;
-
                 default:
-                    await DisplayAlertAsync("Успех", "Регистрация выполнена!", "Войти");
-                    await Navigation.PushAsync(new LoginPage());
                     break;
             }
         });
@@ -184,16 +197,17 @@ public partial class RegistrationPage : ContentPage
         }
     }
 
-    //private async void OnTermsTapped(object sender, EventArgs e)
-    //{
-    //    var popup = new TermsPopup();
-    //    await this.ShowPopupAsync(popup);
-    //}
+    private async void OnTermsTapped(object sender, EventArgs e)
+    {
+        var popup = new TermsPopup();
+        await this.ShowPopupAsync(popup);
 
-    //private async void OnPrivacyTapped(object sender, EventArgs e)
-    //{
-    //    var popup = new PrivacyPopup();
-    //    await this.ShowPopupAsync(popup);
-    //}
+    }
+
+    private async void OnPrivacyTapped(object sender, EventArgs e)
+    {
+        var popup = new PrivacyPopup();
+        await this.ShowPopupAsync(popup);
+    }
 
 }
