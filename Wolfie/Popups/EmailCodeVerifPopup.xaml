@@ -1,19 +1,20 @@
-<?xml version="1.0" encoding="utf-8" ?>
 <toolkit:Popup xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
-             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
-             x:Class="Wolfie.Popups.EmailCodeVerifPopup"
-             xmlns:toolkit="http://schemas.microsoft.com/dotnet/2022/maui/toolkit"
-             CanBeDismissedByTappingOutsideOfPopup="False">
+               xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+               xmlns:toolkit="http://schemas.microsoft.com/dotnet/2022/maui/toolkit"
+               x:Class="Wolfie.Popups.EmailCodeVerifPopup"
+               CanBeDismissedByTappingOutsideOfPopup="False">
+
     <Border
         WidthRequest="960"
         HeightRequest="520"
         Padding="15"
         BackgroundColor="White"
-
         HorizontalOptions="Center"
         VerticalOptions="Center">
-        <VerticalStackLayout Spacing="20">
-            <!-- ===== Верхняя панель с логотипом, темой и кнопкой назад ===== -->
+
+        <VerticalStackLayout Spacing="20" HorizontalOptions="Center">
+
+            <!-- Верхняя панель с логотипом -->
             <Grid Padding="10" ColumnSpacing="10">
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="*"/>
@@ -21,62 +22,34 @@
                     <ColumnDefinition Width="Auto"/>
                 </Grid.ColumnDefinitions>
 
-                <!-- Центрированный логотип и текст -->
                 <StackLayout Grid.Column="0" Orientation="Horizontal" HorizontalOptions="Center" VerticalOptions="Center">
-                    <Image 
-                           Source="logo.png"
-                           WidthRequest="40"
-                           HeightRequest="40"
-                           Margin="45,0,0,0"
-                           VerticalOptions="Center"/>
-
-                    <VerticalStackLayout Padding="10,0,0,0" VerticalOptions="Center">
-                        <Label 
-                               Text="Onlygram"
-                               FontSize="24"
-                               FontFamily="MetalMania"
-                               TextColor="Black"
-                               HorizontalOptions="Center"/>
-                        <Label 
-                               Text="by LB Studio"
-                               FontSize="12"
-                               FontFamily="MetalMania"
-                               TextColor="Black"
-                               HorizontalOptions="Center"/>
-                    </VerticalStackLayout>
+                    <Image Source="logo.png" WidthRequest="40" HeightRequest="40"/>
+                    <Label Text="Wolfie" FontSize="24" FontFamily="MetalMania" TextColor="Black" VerticalOptions="Center" Margin="10,0,0,0"/>
                 </StackLayout>
             </Grid>
-            <Label 
-                   Text="Verificate your email"
-                   FontFamily="MetalMania"
-                   FontSize="20"
-                   FontAttributes="Bold"
-                   HorizontalOptions="Center"
-                   TextColor="Black"
-                   Margin="0,10,0,0"/>
 
-            <Label 
-                   Text="Code:" FontFamily="PollerOne" FontSize="16"
-                   HorizontalOptions="Center" TextColor="Black" Margin="20,0,0,0"/>
+            <Label Text="Verify your email" FontFamily="MetalMania" FontSize="20" FontAttributes="Bold" HorizontalOptions="Center" TextColor="Black"/>
 
-            <Entry x:Name="CodeEntry"
-                   Placeholder="XXX-XXX-XXX"
-                   HorizontalTextAlignment="Center"
-                   PlaceholderColor="Gray"
-                   BackgroundColor="#F5F5F5"
-                   TextColor="Black"
-                   HeightRequest="48"
-                   WidthRequest="120"
-                   HorizontalOptions="Center"/>
-            <Button 
-                    Text="Verificate"
-                    BackgroundColor="Black"
-                    TextColor="White"
-                    CornerRadius="8"
-                    HeightRequest="48"
-                    Clicked="VerifButtonClicked"
-                    Margin="0,20,0,0"
-                    HorizontalOptions="Center"/>
+            <!-- Поле ввода кода и кнопка -->
+            <HorizontalStackLayout Spacing="15" HorizontalOptions="Center">
+                <Entry x:Name="CodeEntry"
+                       Placeholder="XXX-XXX-XXX"
+                       HorizontalTextAlignment="Center"
+                       PlaceholderColor="Gray"
+                       BackgroundColor="#F5F5F5"
+                       TextColor="Black"
+                       HeightRequest="48"
+                       WidthRequest="200"/>
+
+                <Button Text="Verify"
+                        BackgroundColor="Black"
+                        TextColor="White"
+                        CornerRadius="8"
+                        HeightRequest="48"
+                        WidthRequest="150"
+                        Clicked="VerifButtonClicked"/>
+            </HorizontalStackLayout>
+
         </VerticalStackLayout>
     </Border>
 </toolkit:Popup>

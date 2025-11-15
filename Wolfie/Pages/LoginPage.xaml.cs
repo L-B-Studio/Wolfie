@@ -1,5 +1,6 @@
 using CommunityToolkit.Maui.Extensions;
 using System.Net.Mail;
+using System.Reflection.Metadata.Ecma335;
 using System.Text.Json;
 using Wolfie.Helpers;
 using Wolfie.Models;
@@ -30,26 +31,40 @@ public partial class LoginPage : ContentPage
 
     private async void OnMessageReceived(string msg)
     {
-        var packet = JsonSerializer.Deserialize<GetJsonPackage>(msg);
+        var packet = JsonSerializer.Deserialize<JsonPackage>(msg);
+
+        if (packet == null || packet.body == null)
+            return;
+
         await MainThread.InvokeOnMainThreadAsync(async () =>
         {
+            // Достаём значение body["value"]
 
-            switch (packet.status.ToLower().Trim())
+            switch (packet.header.Trim().ToLower())
             {
                 case "error":
-                    if(packet.data.GetProperty("error").GetString().ToLower().Trim() == "invalid_credentials")//INVALID_CREDENTIALS
-                        { await DisplayAlertAsync("Ошибка", "Почта или пароль не правильные", "Ок"); }
-                    break;
-                case "success":
-                    if (packet.data.GetProperty("error").GetString().ToLower().Trim() == "log_ok")//INVALID_CREDENTIALS
-                    { await DisplayAlertAsync("Успех", "Регистрация выполнена!", "Войти"); }
-                    //var popup = new EmailCodeVerifPopup();
-                    //await this.ShowPopupAsync(popup);
 
+                    packet.body.TryGetValue("error", out string error);
+                    error = error?.Trim().ToLower();
+                    if (error == "invalid_credentials")
+                    {
+                        await DisplayAlertAsync("Ошибка", "Почта или пароль не правильные", "Ок");
+                    }
+                    break;
+
+                case "success":
+
+                    packet.body.TryGetValue("sucess", out string sucess);
+                    sucess = sucess?.Trim().ToLower();
+                    if (sucess == "log_ok")
+                    {
+                        await DisplayAlertAsync("Успех", "Регистрация выполнена!", "Войти");
+                    }
                     break;
             }
         });
     }
+
 
     private async void LoginButtonClicked(object sender, EventArgs e)
     {
@@ -75,10 +90,10 @@ public partial class LoginPage : ContentPage
         }
         try
         {
-            await _tcpService.SendJsonAsync("login_data", new 
+            await _tcpService.SendJsonAsync("login_data", new()
             {
-                mail = email,
-                password = pass
+                ["mail"] = email,
+                ["password"] = pass
             });
 
         }
@@ -114,7 +129,7 @@ public partial class LoginPage : ContentPage
             MainLayout.BackgroundColor = Colors.Black;
 
             TitleLabel.TextColor = Colors.White;
-            SubTitleLabel.TextColor = Colors.White;
+            //SubTitleLabel.TextColor = Colors.White;
             AgreeSpan.TextColor = Colors.White;
             AndSpan.TextColor = Colors.White;
             LoginButton.BackgroundColor = Colors.White;
@@ -122,9 +137,9 @@ public partial class LoginPage : ContentPage
             RegistrationButton.BackgroundColor = Colors.White;
             RegistrationButton.TextColor = Colors.Black;
 
-            EnterAccountLabel.TextColor = Colors.White;
-            EmailLabel.TextColor = Colors.White;
-            PassLabel.TextColor = Colors.White;
+            //EnterAccountLabel.TextColor = Colors.White;
+            //EmailLabel.TextColor = Colors.White;
+            //PassLabel.TextColor = Colors.White;
             OrLable.TextColor = Colors.White;
         }
         else
@@ -135,7 +150,7 @@ public partial class LoginPage : ContentPage
             MainLayout.BackgroundColor = Colors.White;
 
             TitleLabel.TextColor = Colors.Black;
-            SubTitleLabel.TextColor = Colors.Black;
+            //SubTitleLabel.TextColor = Colors.Black;
             AgreeSpan.TextColor = Colors.Black;
             AndSpan.TextColor = Colors.Black;
             LoginButton.BackgroundColor = Colors.Black;
@@ -143,9 +158,9 @@ public partial class LoginPage : ContentPage
             RegistrationButton.BackgroundColor = Colors.Black;
             RegistrationButton.TextColor = Colors.White;
 
-            EnterAccountLabel.TextColor = Colors.Black;
-            EmailLabel.TextColor = Colors.Black;
-            PassLabel.TextColor = Colors.Black;
+            //EnterAccountLabel.TextColor = Colors.Black;
+            //EmailLabel.TextColor = Colors.Black;
+            //PassLabel.TextColor = Colors.Black;
             OrLable.TextColor = Colors.Black;
         }
 

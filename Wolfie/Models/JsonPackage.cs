@@ -5,9 +5,9 @@ using System.Text.Json;
 
 namespace Wolfie.Models
 {
-    public class SendJsonPackage
+    public class JsonPackage
     {
-        public string command { get; set; }
-        public object data { get; set; }
+        public string header { get; set; }
+        public Dictionary<string , string> body { get; set; }
     }
 }

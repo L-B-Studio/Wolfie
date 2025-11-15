@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Net.Security;
 using System.Text;
+using System.Text.Json;
 using Wolfie.Helpers;
 using Wolfie.Models;
 
@@ -23,54 +24,46 @@ namespace Wolfie.Services
 
         public async void OnMessageReceivedAsync(string msg)
         {
-            var _message = msg.Trim().ToLower().Split(';').ToArray();
+            var packet = JsonSerializer.Deserialize<JsonPackage>(msg);
 
-            switch (_message[0])
+            switch (packet.header.ToLower().Trim())
             {
                 case "chatitem_data":
-                    //if (_message.Length < 5) return;
-
-                    //int length = int.Parse(_message[4]);
-                    //byte[] buffer = new byte[length];
-                    //int totalRead = 0;
-                    //
-                    //while (totalRead < length)
-                    //{
-                    //    int read = await stream.ReadAsync(buffer, totalRead, length - totalRead);
-                    //    if (read == 0) throw new Exception("Connection closed while reading avatar");
-                    //    totalRead += read;
-                    //}
-                    //
-                    //while(totalRead < length)
-                    //{
-                    //    
-                    //}
-                    //    
-                    //string filePath = Path.Combine(FileSystem.CacheDirectory, $"{_message[2]}_avatar.jpg");
-                    //await File.WriteAllBytesAsync(filePath, buffer);
 
                     Chats.Add(new ChatItem
                     {
-                        ChatId = _message[1],
-                        Username = _message[2],
-                        LastMessage = _message[3],
-                        //Avatar = filePath
+                        ChatId = packet.body["ChatId"].ToLower().Trim(),
+                        Username = packet.body["Username"].ToLower().Trim(),
+                        LastMessage = packet.body["LastMessage"].ToLower().Trim()
                     });
+
                     break;
 
-                case "messageitem_data":
-                    //if (_message.Length < 5) return;
 
-                    Messages[_message[1]].Add(new MessageItem
+                case "messageitem_data":
+                    var chatId = packet.body["ChatId"].ToLower().Trim();
+
+                    // Проверяем, есть ли коллекция сообщений для данного ChatId
+                    if (!Messages.ContainsKey(chatId))
                     {
-                        ChatId = _message[1],
-                        Sender = _message[2],
-                        Message = _message[3],
-                        MessageTime = DateTime.Parse(_message[4])
+                        Messages[chatId] = new ObservableCollection<MessageItem>();
+                    }
+
+                    // Добавляем сообщение
+                    Messages[chatId].Add(new MessageItem
+                    {
+                        ChatId = chatId,
+                        Sender = packet.body["Sender"].ToLower().Trim(),
+                        Getter = packet.body["Getter"].ToLower().Trim(),
+                        Message = packet.body["Message"].ToLower().Trim(),
+                        MessageTime = DateTime.Parse(packet.body["MessageTime"])
                     });
+
+
                     break;
             }
         }
+
         public ObservableCollection<MessageItem> GetMessages(string chatId)
         {
             if (!Messages.ContainsKey(chatId))

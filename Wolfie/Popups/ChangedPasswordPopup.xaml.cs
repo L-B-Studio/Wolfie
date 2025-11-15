@@ -29,7 +29,7 @@ public partial class ChangedPasswordPopup : Popup
 
 		try
 		{
-			await _client.SendJsonAsync("changedpass_data;" , new{ password = newPass });
+			await _client.SendJsonAsync("changedpass_data;" , new(){ ["password"] = newPass });
 			await ShowAlert("SUCCESS" , "Try to login with new password now");
 			await CloseAsync();
 		}

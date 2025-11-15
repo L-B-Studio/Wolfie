@@ -20,23 +20,29 @@ public partial class ForgotPassPopup : Popup
     private async void OnMessageReceivedAsync(string msg)
     {
         _tcpService.MessageReceived -= OnMessageReceivedAsync;
-        var packet = JsonSerializer.Deserialize<GetJsonPackage>(msg);
-        switch (packet.status.ToLower().Trim())
+        var packet = JsonSerializer.Deserialize<JsonPackage>(msg);
+        switch (packet.header.ToLower().Trim())
         {
-            case "error" :
-                if (packet.data.GetProperty("error").GetString().ToLower().Trim() == "cant_send_mail")
+            case "error":
+                packet.body.TryGetValue("error", out string error);
+                error = error?.Trim().ToLower();
+                if (error == "cant_send_mail")
                 {
                     await ShowAlert("Error", "This email is unreal");
                 }
+                else if (error == "email_dont_register")
+                {
+                    await ShowAlert("Error", "This email is unregistered");
+                }
                 break;
             case "success":
-                if (packet.data.GetProperty("message").GetString().ToLower().Trim() == "mail_sended")
+                packet.body.TryGetValue("error", out string sucess);
+                sucess = sucess?.Trim().ToLower();
+                if (sucess == "mail_sended")
                 {
                     await CloseAsync();
                     await Shell.Current.GoToAsync(nameof(EmailCodeVerifPopup));
                 }
-                break;
-            default:
                 break;
         }
     }
@@ -53,7 +59,7 @@ public partial class ForgotPassPopup : Popup
             return;
         }
 
-        await _tcpService.SendJsonAsync("forgotpass_data" , new {mail = email});
+        await _tcpService.SendJsonAsync("forgotpass_data" , new() {["email"] = email});
 
     }
 

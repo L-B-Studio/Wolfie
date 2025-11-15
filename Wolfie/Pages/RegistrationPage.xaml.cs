@@ -82,11 +82,11 @@ public partial class RegistrationPage : ContentPage
 
         try
         {
-            await _tcpService.SendJsonAsync("registration_data", new {
-                name = username,
-                mail = email,
-                password = createPass,
-                born = birthday
+            await _tcpService.SendJsonAsync("registration_data", new() {
+                ["username"]= username,
+                ["email"] = email,
+                ["password"] = createPass,
+                ["birthday"] = birthday.ToString()
             });
         }
         catch
@@ -97,27 +97,29 @@ public partial class RegistrationPage : ContentPage
 
     private async void OnMessageReceived(string msg)
     {
-        var packet = JsonSerializer.Deserialize<GetJsonPackage>(msg);
+        var packet = JsonSerializer.Deserialize<JsonPackage>(msg);
         await MainThread.InvokeOnMainThreadAsync(async () =>
         {
-            switch (packet.status.ToLower().Trim())
+            switch (packet.header.ToLower().Trim())
             {
                 case "error":
-                    if (packet.data.GetProperty("error").GetString().ToLower().Trim() == "email_exists")
+                    packet.body.TryGetValue("error", out string error);
+                    error = error?.Trim().ToLower();
+                    if (error == "email_exists")
                         { await DisplayAlertAsync("Ошибка", "Почта уже зарегистрирована", "Ок"); }
-                    else if (packet.data.GetProperty("error").GetString().ToLower().Trim() == "username_exists")
+                    else if (error == "username_exists")
                     {
                         await DisplayAlertAsync("Ошибка", "Имя пользователя занято", "Ок");
                     }
                     break;
                 case "success":
-                    if (packet.data.GetProperty("message").GetString().ToLower().Trim() == "reg_ok")
+                    packet.body.TryGetValue("error", out string sucess);
+                    sucess = sucess?.Trim().ToLower();
+                    if (sucess == "reg_ok")
                     {
                         await DisplayAlertAsync("Успех", "Регистрация выполнена!", "Войти");
                         await Navigation.PushAsync(new LoginPage());
                     }
-                    break;
-                default:
                     break;
             }
         });
@@ -162,17 +164,17 @@ public partial class RegistrationPage : ContentPage
             MainLayout.BackgroundColor = Colors.Black;
 
             TitleLabel.TextColor = Colors.White;
-            SubTitleLabel.TextColor = Colors.White;
+            //SubTitleLabel.TextColor = Colors.White;
             AgreeSpan.TextColor = Colors.White;
             AndSpan.TextColor = Colors.White;
             RegistrationButton.BackgroundColor = Colors.White;
             RegistrationButton.TextColor = Colors.Black;
 
-            CreateAccountLabel.TextColor = Colors.White;
-            NicknameLabel.TextColor = Colors.White;
-            BirthdayLabel.TextColor = Colors.White;
-            EmailLabel.TextColor = Colors.White;
-            PassLabel.TextColor = Colors.White;
+            //CreateAccountLabel.TextColor = Colors.White;
+            //NicknameLabel.TextColor = Colors.White;
+            //BirthdayLabel.TextColor = Colors.White;
+            //EmailLabel.TextColor = Colors.White;
+            //PassLabel.TextColor = Colors.White;
         }
         else
         {
@@ -183,17 +185,17 @@ public partial class RegistrationPage : ContentPage
             MainLayout.BackgroundColor = Colors.White;
 
             TitleLabel.TextColor = Colors.Black;
-            SubTitleLabel.TextColor = Colors.Black;
+            //SubTitleLabel.TextColor = Colors.Black;
             AgreeSpan.TextColor = Colors.Black;
             AndSpan.TextColor = Colors.Black;
             RegistrationButton.BackgroundColor = Colors.Black;
             RegistrationButton.TextColor = Colors.White;
 
-            CreateAccountLabel.TextColor = Colors.Black;
-            NicknameLabel.TextColor = Colors.Black;
-            BirthdayLabel.TextColor = Colors.Black;
-            EmailLabel.TextColor = Colors.Black;
-            PassLabel.TextColor = Colors.Black;
+            //CreateAccountLabel.TextColor = Colors.Black;
+            //NicknameLabel.TextColor = Colors.Black;
+            //BirthdayLabel.TextColor = Colors.Black;
+            //EmailLabel.TextColor = Colors.Black;
+            //PassLabel.TextColor = Colors.Black;
         }
     }
 

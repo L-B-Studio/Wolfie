@@ -1,162 +1,86 @@
-<?xml version="1.0" encoding="utf-8" ?>
 <ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
              xmlns:sys="clr-namespace:System;assembly=mscorlib"
-             x:Class="Wolfie.Pages.RegistrationPage">
-    <ScrollView>
-        <VerticalStackLayout Spacing="15" x:Name="MainLayout" BackgroundColor="White">
+             x:Class="Wolfie.Pages.RegistrationPage"
+             x:Name="MainLayout"
+             BackgroundColor="White">
 
-            <!-- ===== Верхняя панель с логотипом, темой и кнопкой назад ===== -->
+    <ScrollView>
+        <VerticalStackLayout Spacing="15" Padding="20" HorizontalOptions="Center">
+
+            <!-- Верхняя панель -->
             <Grid Padding="10" ColumnSpacing="10">
                 <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="*"/>
                     <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="*"/>
                     <ColumnDefinition Width="Auto"/>
                 </Grid.ColumnDefinitions>
 
-                <!-- Центрированный логотип и текст -->
-                <StackLayout Grid.Column="0" Orientation="Horizontal" HorizontalOptions="Center" VerticalOptions="Center">
-                    <Image x:Name="Logo"
-                       Source="logo.png"
-                       WidthRequest="40"
-                       HeightRequest="40"
-                       Margin="45,0,0,0"
-                       VerticalOptions="Center"/>
+                <!-- Кнопка назад -->
+                <ImageButton x:Name="BackButton"
+                             Grid.Column="0"
+                             Source="back_button.png"
+                             WidthRequest="40"
+                             HeightRequest="40"
+                             BackgroundColor="Transparent"
+                             Clicked="OnBackClicked"
+                             HorizontalOptions="Start"
+                             VerticalOptions="Center"/>
 
-                    <VerticalStackLayout Padding="10,0,0,0" VerticalOptions="Center">
-                        <Label x:Name="TitleLabel"
-                           Text="Onlygram"
-                           FontSize="24"
-                           FontFamily="MetalMania"
-                           TextColor="Black"
-                           HorizontalOptions="Center"/>
-                        <Label x:Name="SubTitleLabel"
-                           Text="by LB Studio"
-                           FontSize="12"
-                           FontFamily="MetalMania"
-                           TextColor="Black"
-                           HorizontalOptions="Center"/>
-                    </VerticalStackLayout>
+                <!-- Логотип и название -->
+                <StackLayout Grid.Column="1" Orientation="Horizontal" HorizontalOptions="Center" VerticalOptions="Center">
+                    <Image x:Name="Logo" Source="logo.png" WidthRequest="40" HeightRequest="40"/>
+                    <Label x:Name="TitleLabel" Text="Wolfie" FontSize="24" FontFamily="MetalMania" TextColor="Black" VerticalOptions="Center" Margin="10,0,0,0"/>
                 </StackLayout>
 
                 <!-- Кнопка смены темы -->
                 <ImageButton x:Name="ThemeButton"
-                         Grid.Column="2"
-                         Source="moon.png"
-                         WidthRequest="40"
-                         HeightRequest="40"
-                         BackgroundColor="Transparent"
-                         Clicked="OnThemeClicked"
-                         HorizontalOptions="End"
-                         VerticalOptions="Center"/>
-
-                <!-- Кнопка назад -->
-                <ImageButton x:Name="BackButton"
-         Grid.Column="0"
-         Source="back_button.png"
-         WidthRequest="40"
-         HeightRequest="40"
-         BackgroundColor="Transparent"
-         Clicked="OnBackClicked"
-         HorizontalOptions="Start"
-         VerticalOptions="Center"/>
+                             Grid.Column="2"
+                             Source="moon.png"
+                             WidthRequest="40"
+                             HeightRequest="40"
+                             BackgroundColor="Transparent"
+                             Clicked="OnThemeClicked"
+                             HorizontalOptions="End"
+                             VerticalOptions="Center"/>
             </Grid>
 
-            <!-- ===== Основной контент ===== -->
-            <Label x:Name="CreateAccountLabel"
-               Text="Create Account"
-               FontFamily="MetalMania"
-               FontSize="20"
-               FontAttributes="Bold"
-               HorizontalOptions="Center"
-               TextColor="Black"
-               Margin="0,10,0,0"/>
+            <!-- Основной контент -->
+            <Label Text="Create Account" FontSize="20" FontAttributes="Bold" FontFamily="MetalMania" HorizontalOptions="Center"/>
 
-            <Label x:Name="NicknameLabel"
-               Text="Nickname:" FontFamily="PollerOne" FontSize="16"
-               HorizontalOptions="Start" TextColor="Black" Margin="20,0,0,0"/>
+            <Entry x:Name="NicknameEntry" Placeholder="Anonymous228" PlaceholderColor="Gray" BackgroundColor="#F5F5F5" TextColor="Black" HeightRequest="48"/>
+            <DatePicker x:Name="BirthdayDatePicker" BackgroundColor="#F5F5F5" TextColor="Black" HeightRequest="48" MaximumDate="{x:Static sys:DateTime.Today}"/>
+            <Entry x:Name="EmailEntry" Placeholder="example@gmail.com" Keyboard="Email" PlaceholderColor="Gray" BackgroundColor="#F5F5F5" TextColor="Black" HeightRequest="48"/>
+            <Entry x:Name="PasswordCreateEntry" Placeholder="Придумайте пароль" IsPassword="True" BackgroundColor="#F5F5F5" TextColor="Black" HeightRequest="48"/>
+            <Entry x:Name="PasswordAgainEntry" Placeholder="Подтвердите пароль" IsPassword="True" BackgroundColor="#F5F5F5" TextColor="Black" HeightRequest="48"/>
 
-            <Entry x:Name="NicknameEntry"
-               Placeholder="Anonymous228"
-               PlaceholderColor="Gray"
-               BackgroundColor="#F5F5F5"
-               TextColor="Black"
-               HeightRequest="48"/>
+            <Button x:Name="RegistrationButton" Text="Registration" BackgroundColor="Black" TextColor="White" CornerRadius="8" HeightRequest="48" Clicked="RegistrationButtonClicked"/>
 
-            <Label x:Name="BirthdayLabel"
-               Text="Birthday's date:" FontFamily="PollerOne" FontSize="16"
-               HorizontalOptions="Start" TextColor="Black" Margin="20,0,0,0"/>
-
-            <DatePicker x:Name="BirthdayDatePicker"
-                    BackgroundColor="#F5F5F5"
-                    TextColor="Black"
-                    HeightRequest="48"
-                    MaximumDate="{x:Static sys:DateTime.Today}"/>
-
-            <Label x:Name="EmailLabel"
-               Text="Email:" FontFamily="PollerOne" FontSize="16"
-               HorizontalOptions="Start" TextColor="Black" Margin="20,0,0,0"/>
-
-            <Entry x:Name="EmailEntry"
-               Placeholder="example@gmail.com"
-               Keyboard="Email"
-               PlaceholderColor="Gray"
-               BackgroundColor="#F5F5F5"
-               TextColor="Black"
-               HeightRequest="48"/>
-
-            <Label x:Name="PassLabel"
-               Text="Password:" FontFamily="PollerOne" FontSize="16"
-               HorizontalOptions="Start" TextColor="Black" Margin="20,0,0,0"/>
-
-            <Entry x:Name="PasswordCreateEntry"
-               Placeholder="Придумайте пароль"
-               IsPassword="True"
-               BackgroundColor="#F5F5F5"
-               TextColor="Black"
-               HeightRequest="48"/>
-
-            <Entry x:Name="PasswordAgainEntry"
-               Placeholder="Подтвердите пароль"
-               IsPassword="True"
-               BackgroundColor="#F5F5F5"
-               TextColor="Black"
-               HeightRequest="48"/>
-
-            <Button x:Name="RegistrationButton"
-                Text="Registration"
-                BackgroundColor="Black"
-                TextColor="White"
-                CornerRadius="8"
-                HeightRequest="48"
-                Clicked="RegistrationButtonClicked"
-                Margin="0,20,0,0"/>
-
-            <!-- ===== Соглашение ===== -->
+            <!-- Соглашение -->
             <StackLayout Orientation="Horizontal" Margin="10" HorizontalOptions="Center">
                 <CheckBox x:Name="AgreeCheckBox"
-                      VerticalOptions="Start"
-                      Color="Blue"/>
+                  VerticalOptions="Start"
+                  Color="Blue"/>
 
                 <Label VerticalOptions="Start">
                     <Label.FormattedText>
                         <FormattedString>
                             <Span Text="Я соглашаюсь с "
-                              x:Name="AgreeSpan"
-                              TextColor="Black"/>
+                          x:Name="AgreeSpan"
+                          TextColor="Black"/>
                             <Span Text="Условиями использования&#x0a;"
-                              TextDecorations="Underline"
-                              TextColor="Blue">
+                          TextDecorations="Underline"
+                          TextColor="Blue">
                                 <Span.GestureRecognizers>
                                     <TapGestureRecognizer Tapped="OnTermsTapped"/>
                                 </Span.GestureRecognizers>
                             </Span>
                             <Span Text="и "
-                              x:Name="AndSpan"
-                              TextColor="Black"/>
+                          x:Name="AndSpan"
+                          TextColor="Black"/>
                             <Span Text="Политикой конфиденциальности"
-                              TextDecorations="Underline"
-                              TextColor="Blue">
+                          TextDecorations="Underline"
+                          TextColor="Blue">
                                 <Span.GestureRecognizers>
                                     <TapGestureRecognizer Tapped="OnPrivacyTapped"/>
                                 </Span.GestureRecognizers>

@@ -1,8 +1,8 @@
 using CommunityToolkit.Maui.Views;
+using System.Text;
 using System.Text.Json;
 using Wolfie.Helpers;
 using Wolfie.Models;
-using Wolfie.Pages;
 using Wolfie.Services;
 
 namespace Wolfie.Popups;
@@ -10,12 +10,13 @@ namespace Wolfie.Popups;
 public partial class EmailCodeVerifPopup : Popup
 {
     private readonly SslClientService _tcpService;
-
+    private bool _isEditing = false;
     public EmailCodeVerifPopup()
     {
         InitializeComponent();
         _tcpService = SslClientHelper.GetService<SslClientService>();
         _tcpService.MessageReceived += OnMessageReceived;
+        CodeEntry.TextChanged += CodeEntry_TextChanged;
     }
 
     private async void OnMessageReceived(string msg)
@@ -24,24 +25,28 @@ public partial class EmailCodeVerifPopup : Popup
         {
             _tcpService.MessageReceived -= OnMessageReceived;
 
-            var packet = JsonSerializer.Deserialize<GetJsonPackage>(msg);
-            switch (packet.status.ToLower().Trim())
+            var packet = JsonSerializer.Deserialize<JsonPackage>(msg);
+            switch (packet.header.ToLower().Trim())
             {
                 case "error":
-                    if (packet.data.GetProperty("error").GetString().ToLower().Trim() == "cant_send_email")
+                    packet.body.TryGetValue("error", out string error);
+                    error = error?.Trim().ToLower();
+                    if (error == "cant_send_email")
                     {
                         await Application.Current.MainPage
                             .DisplayAlertAsync("Error", "This email is unreal" , "ok");
                     }
-                    if (packet.data.GetProperty("error").GetString().ToLower().Trim() == "invalid_code")
-                    {
+                    else if (error == "invalid_code")
+                    {   
                         await Application.Current.MainPage
                             .DisplayAlertAsync("Error", "This email is unreal", "ok");
                     }
                     break;
 
                 case "success":
-                    if (packet.data.GetProperty("message").GetString().ToLower().Trim() == "email_verified")
+                    packet.body.TryGetValue("error", out string sucess);
+                    sucess = sucess?.Trim().ToLower();
+                    if (sucess == "email_verified")
                     {
                         await Application.Current.MainPage
                             .DisplayAlertAsync("Успех", "Почта подтверждена", "OK");
@@ -50,8 +55,6 @@ public partial class EmailCodeVerifPopup : Popup
                         // переходим на главную
                         await Shell.Current.GoToAsync(nameof(ChangedPasswordPopup));
                     }
-                    break;
-                default :
                     break;
             }
         });
@@ -73,11 +76,40 @@ public partial class EmailCodeVerifPopup : Popup
         try
         {
             //string message = $"verify_data;{verifCode}";
-            await _tcpService.SendJsonAsync("verify_data" , new {code = verifCode});
+            await _tcpService.SendJsonAsync("verify_data", new() { ["code"] = verifCode });
         }
         catch (Exception ex)
         {
             await Application.Current.MainPage.DisplayAlertAsync("Ошибка", ex.Message, "OK");
         }
+    }
+    private void CodeEntry_TextChanged(object sender, TextChangedEventArgs e)
+    {
+        if (_isEditing) return;
+
+        _isEditing = true;
+
+        var entry = (Entry)sender;
+        string text = entry.Text ?? "";
+
+        // Убираем всё, кроме букв/цифр
+        text = new string(text.Where(char.IsLetterOrDigit).ToArray());
+
+        // Добавляем "-" после каждых 3 символов
+        var formatted = new StringBuilder();
+        for (int i = 0; i < text.Length; i++)
+        {
+            if (i > 0 && i % 3 == 0)
+                formatted.Append('-');
+
+            formatted.Append(text[i]);
+        }
+
+        entry.Text = formatted.ToString();
+
+        // Ставим курсор в конец
+        entry.CursorPosition = entry.Text.Length;
+
+        _isEditing = false;
     }
 }

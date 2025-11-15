@@ -1,4 +1,7 @@
-﻿
+﻿#if ANDROID
+using Android.App;
+using Wolfie;
+#endif
 using System.Net.Security;
 using System.Net.Sockets;
 using System.Security.Cryptography.X509Certificates;
@@ -10,6 +13,8 @@ namespace Wolfie.Services
 {
     public class SslClientService : IDisposable
     {
+        private readonly RateLimiter _rateLimiter = new RateLimiter(3, TimeSpan.FromMinutes(1));
+
         private TcpClient? _client;
         private SslStream? _sslStream;
         private StreamWriter? _writer;
@@ -20,8 +25,9 @@ namespace Wolfie.Services
 
         private readonly TimeSpan _reconnectDelay = TimeSpan.FromSeconds(5);
 
-        //private readonly string _host = "213.231.4.165";
-        private readonly string _host = "192.168.168.118";
+        //private readonly string _host = "172.22.64.1";
+        private readonly string _host = "213.231.4.165";
+        //private readonly string _host = "192.168.168.118";
         private readonly int _port = 1234;
 
         private bool _isConnecting = false;
@@ -33,14 +39,15 @@ namespace Wolfie.Services
         public event Action Connected;
         public event Action Disconnected;
 
-        public SslClientService() { _ = LoadPinnedCertificateAsync(); }
+        public SslClientService() { LoadPinnedCertSync(); }
 
         // ✅ Загружаем server.cer из MAUI 
-        private async Task LoadPinnedCertificateAsync()
+        private void LoadPinnedCertSync()
         {
-            using var stream = await FileSystem.OpenAppPackageFileAsync("server.cer");
+            using var stream = FileSystem.OpenAppPackageFileAsync("server.cer").Result;
+            //using var stream = FileSystem.OpenAppPackageFileAsync("testserver.cer").Result;
             using var ms = new MemoryStream();
-            await stream.CopyToAsync(ms);
+            stream.CopyTo(ms);
 
             _localPinnedCert = X509CertificateLoader.LoadCertificate(ms.ToArray());
         }
@@ -191,14 +198,22 @@ namespace Wolfie.Services
         //    }
         //}
 
-        public async Task SendJsonAsync(string command, object data)
+        public async Task SendJsonAsync(string command, Dictionary<string,string> data)
         {
+
+            // rate limit
+            if (!_rateLimiter.TryAcquire())
+            {
+                Console.WriteLine("⚠️ Rate limit reached. Request blocked.");
+                return; // Можно кинуть исключение, если нужно
+            }
+
             await EnsureConnectedAsync();
 
-            var packet = new SendJsonPackage
+            var packet = new JsonPackage
             {
-                command = command,
-                data = data
+                header = command,
+                body = data
             };
 
             string json = JsonSerializer.Serialize(packet);
