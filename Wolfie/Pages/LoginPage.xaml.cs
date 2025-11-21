@@ -54,7 +54,7 @@ public partial class LoginPage : ContentPage
 
                 case "success":
 
-                    packet.body.TryGetValue("sucess", out string sucess);
+                    packet.body.TryGetValue("success", out string sucess);
                     sucess = sucess?.Trim().ToLower();
                     if (sucess == "log_ok")
                     {

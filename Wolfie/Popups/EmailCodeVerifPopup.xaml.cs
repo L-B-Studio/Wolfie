@@ -1,5 +1,5 @@
+using CommunityToolkit.Maui.Extensions;
 using CommunityToolkit.Maui.Views;
-using System.Text;
 using System.Text.Json;
 using Wolfie.Helpers;
 using Wolfie.Models;
@@ -11,105 +11,96 @@ public partial class EmailCodeVerifPopup : Popup
 {
     private readonly SslClientService _tcpService;
     private bool _isEditing = false;
+
     public EmailCodeVerifPopup()
     {
         InitializeComponent();
         _tcpService = SslClientHelper.GetService<SslClientService>();
         _tcpService.MessageReceived += OnMessageReceived;
-        CodeEntry.TextChanged += CodeEntry_TextChanged;
+
+        // Отписка при закрытии попапа
+        this.Closed += (s, e) =>
+        {
+            _tcpService.MessageReceived -= OnMessageReceived;
+        };
     }
 
     private async void OnMessageReceived(string msg)
     {
         await MainThread.InvokeOnMainThreadAsync(async () =>
         {
-            _tcpService.MessageReceived -= OnMessageReceived;
-
             var packet = JsonSerializer.Deserialize<JsonPackage>(msg);
-            switch (packet.header.ToLower().Trim())
+            if (packet == null || string.IsNullOrWhiteSpace(packet.header)) return;
+
+            switch (packet.header.Trim().ToLower())
             {
                 case "error":
                     packet.body.TryGetValue("error", out string error);
                     error = error?.Trim().ToLower();
                     if (error == "cant_send_email")
-                    {
-                        await Application.Current.MainPage
-                            .DisplayAlertAsync("Error", "This email is unreal" , "ok");
-                    }
+                        await Application.Current.MainPage.DisplayAlertAsync("Error", "This email is unreal", "OK");
                     else if (error == "invalid_code")
-                    {   
-                        await Application.Current.MainPage
-                            .DisplayAlertAsync("Error", "This email is unreal", "ok");
-                    }
+                        await Application.Current.MainPage.DisplayAlertAsync("Error", "Invalid code", "OK");
                     break;
 
                 case "success":
-                    packet.body.TryGetValue("error", out string sucess);
-                    sucess = sucess?.Trim().ToLower();
-                    if (sucess == "email_verified")
+                    packet.body.TryGetValue("success", out string success);
+                    success = success?.Trim().ToLower();
+                    if (success == "email_verified")
                     {
-                        await Application.Current.MainPage
-                            .DisplayAlertAsync("Успех", "Почта подтверждена", "OK");
-                        // закрываем попап
+                        var newPopup = new ChangedPasswordPopup();
+                        await Task.Delay(100); // чтобы UI успел обновиться
                         await CloseAsync();
-                        // переходим на главную
-                        await Shell.Current.GoToAsync(nameof(ChangedPasswordPopup));
+                        await Application.Current.MainPage.ShowPopupAsync(newPopup);
                     }
                     break;
             }
         });
     }
 
+    private void CodeEntry_TextChanged(object sender, TextChangedEventArgs e)
+    {
+        if (_isEditing) return;
+        _isEditing = true;
 
+        var entry = sender as Entry;
+        string text = entry.Text ?? "";
+
+        // Оставляем только буквы и цифры
+        text = new string(text.Where(char.IsLetterOrDigit).ToArray());
+        entry.Text = text;
+
+        if (text.Length == 3)
+        {
+            if (entry == CodeEntry1) CodeEntry2.Focus();
+            else if (entry == CodeEntry2) CodeEntry3.Focus();
+        }
+        else if (text.Length == 0)
+        {
+            if (entry == CodeEntry3) CodeEntry2.Focus();
+            else if (entry == CodeEntry2) CodeEntry1.Focus();
+        }
+
+        _isEditing = false;
+    }
 
     private async void VerifButtonClicked(object sender, EventArgs e)
     {
-        string verifCode = CodeEntry.Text?.Trim();
+        string code = $"{CodeEntry1.Text}{CodeEntry2.Text}{CodeEntry3.Text}";
 
-        if (string.IsNullOrWhiteSpace(verifCode) || verifCode.Length < 9)
+        if (code.Length != 9)
         {
-            await Application.Current.MainPage.DisplayAlertAsync(
-               "Ошибка", "Введите корректный код", "OK");
+            await Application.Current.MainPage.DisplayAlertAsync("Ошибка", "Введите корректный код", "OK");
             return;
         }
 
         try
         {
-            //string message = $"verify_data;{verifCode}";
-            await _tcpService.SendJsonAsync("verify_data", new() { ["code"] = verifCode });
+            await _tcpService.SendJsonAsync("verify_data", new() { ["code"] = code });
         }
         catch (Exception ex)
         {
             await Application.Current.MainPage.DisplayAlertAsync("Ошибка", ex.Message, "OK");
         }
-    }
-    private void CodeEntry_TextChanged(object sender, TextChangedEventArgs e)
-    {
-        if (_isEditing) return;
-
-        _isEditing = true;
-
-        var entry = (Entry)sender;
-        string text = entry.Text ?? "";
-
-        // Убираем всё, кроме букв/цифр
-        text = new string(text.Where(char.IsLetterOrDigit).ToArray());
-
-        // Добавляем "-" после каждых 3 символов
-        var formatted = new StringBuilder();
-        for (int i = 0; i < text.Length; i++)
-        {
-            if (i > 0 && i % 3 == 0)
-                formatted.Append('-');
-
-            formatted.Append(text[i]);
-        }
-
-        entry.Text = formatted.ToString();
-
-        // Ставим курсор в конец
-        entry.CursorPosition = entry.Text.Length;
-
-        _isEditing = false;
     }
 }

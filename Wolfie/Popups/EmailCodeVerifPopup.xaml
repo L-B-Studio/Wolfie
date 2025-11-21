@@ -5,9 +5,9 @@
                CanBeDismissedByTappingOutsideOfPopup="False">
 
     <Border
-        WidthRequest="960"
-        HeightRequest="520"
-        Padding="15"
+        WidthRequest="500"
+        HeightRequest="800"
+        Padding="20"
         BackgroundColor="White"
         HorizontalOptions="Center"
         VerticalOptions="Center">
@@ -15,14 +15,13 @@
         <VerticalStackLayout Spacing="20" HorizontalOptions="Center">
 
             <!-- Верхняя панель с логотипом -->
-            <Grid Padding="10" ColumnSpacing="10">
+            <Grid Padding="10">
                 <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="*"/>
-                    <ColumnDefinition Width="Auto"/>
-                    <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="Auto" />
                 </Grid.ColumnDefinitions>
 
-                <StackLayout Grid.Column="0" Orientation="Horizontal" HorizontalOptions="Center" VerticalOptions="Center">
+                <StackLayout Grid.Column="0" Orientation="Horizontal" HorizontalOptions="Center">
                     <Image Source="logo.png" WidthRequest="40" HeightRequest="40"/>
                     <Label Text="Wolfie" FontSize="24" FontFamily="MetalMania" TextColor="Black" VerticalOptions="Center" Margin="10,0,0,0"/>
                 </StackLayout>
@@ -30,25 +29,67 @@
 
             <Label Text="Verify your email" FontFamily="MetalMania" FontSize="20" FontAttributes="Bold" HorizontalOptions="Center" TextColor="Black"/>
 
-            <!-- Поле ввода кода и кнопка -->
-            <HorizontalStackLayout Spacing="15" HorizontalOptions="Center">
-                <Entry x:Name="CodeEntry"
-                       Placeholder="XXX-XXX-XXX"
-                       HorizontalTextAlignment="Center"
-                       PlaceholderColor="Gray"
-                       BackgroundColor="#F5F5F5"
-                       TextColor="Black"
-                       HeightRequest="48"
-                       WidthRequest="200"/>
+            <!-- Поля ввода кода -->
+            <HorizontalStackLayout Spacing="10" HorizontalOptions="Center">
 
-                <Button Text="Verify"
-                        BackgroundColor="Black"
-                        TextColor="White"
-                        CornerRadius="8"
-                        HeightRequest="48"
-                        WidthRequest="150"
-                        Clicked="VerifButtonClicked"/>
+                <Entry x:Name="CodeEntry1"
+           MaxLength="3"
+           Keyboard="Numeric"
+           HorizontalTextAlignment="Center"
+           BackgroundColor="#F5F5F5"
+           TextColor="Black"
+                        FontAttributes="Bold"
+FontSize="16"
+                       CharacterSpacing="5"
+           HeightRequest="48"
+           WidthRequest="60"
+           TextChanged="CodeEntry_TextChanged"/>
+
+                <Label Text="—"
+           VerticalOptions="Center"
+           HorizontalOptions="Center"
+           FontSize="30"
+           TextColor="Black"/>
+
+                <Entry x:Name="CodeEntry2"
+           MaxLength="3"
+           Keyboard="Numeric"
+           HorizontalTextAlignment="Center"
+           BackgroundColor="#F5F5F5"
+                       CharacterSpacing="5"
+           TextColor="Black"
+           HeightRequest="48"
+           WidthRequest="60"
+                        FontAttributes="Bold"
+FontSize="16"
+           TextChanged="CodeEntry_TextChanged"/>
+
+                <Label Text="—"
+           VerticalOptions="Center"
+           HorizontalOptions="Center"
+           FontSize="30"
+           TextColor="Black"/>
+
+                <Entry x:Name="CodeEntry3"
+           MaxLength="3"
+           Keyboard="Numeric"
+           HorizontalTextAlignment="Center"
+           BackgroundColor="#F5F5F5"
+           TextColor="Black"
+                       CharacterSpacing="5"
+                        FontAttributes="Bold"
+                       FontSize="16"
+           HeightRequest="48"
+           WidthRequest="60"
+           TextChanged="CodeEntry_TextChanged"/>
+
             </HorizontalStackLayout>
+            <Button Text="Verify"
+                    BackgroundColor="Black"
+                    TextColor="White"
+                    CornerRadius="8"
+                    HeightRequest="48"
+                    Clicked="VerifButtonClicked"/>
 
         </VerticalStackLayout>
     </Border>

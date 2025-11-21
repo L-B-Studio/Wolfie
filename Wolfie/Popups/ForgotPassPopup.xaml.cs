@@ -1,3 +1,4 @@
+﻿using CommunityToolkit.Maui.Extensions;
 using CommunityToolkit.Maui.Views;
 using System.Text.Json;
 using Wolfie.Helpers;
@@ -14,38 +15,59 @@ public partial class ForgotPassPopup : Popup
     {
         InitializeComponent();
         _tcpService = SslClientHelper.GetService<SslClientService>();
-        _tcpService.MessageReceived += OnMessageReceivedAsync; 
+        _tcpService.MessageReceived += OnMessageReceivedAsync;
     }
 
     private async void OnMessageReceivedAsync(string msg)
     {
-        _tcpService.MessageReceived -= OnMessageReceivedAsync;
-        var packet = JsonSerializer.Deserialize<JsonPackage>(msg);
-        switch (packet.header.ToLower().Trim())
+        try
         {
-            case "error":
-                packet.body.TryGetValue("error", out string error);
-                error = error?.Trim().ToLower();
-                if (error == "cant_send_mail")
+            var packet = JsonSerializer.Deserialize<JsonPackage>(msg);
+            if (packet == null || string.IsNullOrWhiteSpace(packet.header)) return;
+            if (packet.body == null) packet.body = new Dictionary<string, string>();
+
+            await MainThread.InvokeOnMainThreadAsync(async () =>
+            {
+                switch (packet.header.Trim().ToLower())
                 {
-                    await ShowAlert("Error", "This email is unreal");
+                    case "error":
+                        packet.body.TryGetValue("error", out string error);
+                        error = error?.Trim().ToLower();
+                        if (error == "cant_send_mail")
+                            await ShowAlert("Error", "This email is unreal");
+                        else if (error == "email_dont_register")
+                            await ShowAlert("Error", "This email is unregistered");
+                        break;
+
+                    case "success":
+                        packet.body.TryGetValue("success", out string success);
+                        success = success?.Trim().ToLower();
+                        if (success == "mail_sended")
+                        {
+                            var newPopup = new EmailCodeVerifPopup();
+                            await Task.Delay(100); // чтобы UI успел обновиться
+                            await CloseAsync();
+                            await Application.Current.MainPage.ShowPopupAsync(newPopup);
+                            // НЕ закрываем текущий попап сразу
+                        }
+                        break;
                 }
-                else if (error == "email_dont_register")
-                {
-                    await ShowAlert("Error", "This email is unregistered");
-                }
-                break;
-            case "success":
-                packet.body.TryGetValue("error", out string sucess);
-                sucess = sucess?.Trim().ToLower();
-                if (sucess == "mail_sended")
-                {
-                    await CloseAsync();
-                    await Shell.Current.GoToAsync(nameof(EmailCodeVerifPopup));
-                }
-                break;
+            });
+        }
+        catch (Exception ex)
+        {
+            // логируем исключение, не крашим приложение
+            Console.WriteLine($"MessageReceived error: {ex}");
+
+            await MainThread.InvokeOnMainThreadAsync(async () =>
+            {
+                await Application.Current.MainPage.DisplayAlertAsync("Ошибка", ex.Message, "OK");
+            });
         }
     }
+
+
+
 
 
     private async void SendCodeButtonClicked(object sender, EventArgs e)
@@ -55,15 +77,21 @@ public partial class ForgotPassPopup : Popup
 
         if (string.IsNullOrEmpty(email))
         {
-            await ShowAlert("������", "��� ���� ������ ���� ���������");
+            await ShowAlert("Ошибка", "Все поля должны быть заполнены");
             return;
         }
-
-        await _tcpService.SendJsonAsync("forgotpass_data" , new() {["email"] = email});
+        try
+        {
+            await _tcpService.SendJsonAsync("forgotpass_data", new() { ["email"] = email });
+            await Task.Delay(500);
+        }
+        catch (Exception ex) { 
+            await ShowAlert("Error: ", ex.Message);
+        }
 
     }
 
-    private async Task ShowAlert(string title, string message)
+    private async Task ShowAlert(string title, string message)  
     {
         await Application.Current.MainPage.DisplayAlertAsync(title, message, "OK");
     }
