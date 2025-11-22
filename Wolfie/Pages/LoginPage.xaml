@@ -36,20 +36,20 @@
             <Label Text="Enter in Account" FontSize="20" FontAttributes="Bold" FontFamily="MetalMania" HorizontalOptions="Center"/>
 
             <Entry x:Name="EmailEntry"
-               Placeholder="anonym@gmail.com"
+               Placeholder="example@gmail.com"
                PlaceholderColor="Gray"
                BackgroundColor="#F5F5F5"
                TextColor="Black"
                HeightRequest="48"/>
 
             <Entry x:Name="PasswordEntry"
-               Placeholder="Введите пароль"
+               Placeholder="Password"
                IsPassword="True"
                BackgroundColor="#F5F5F5"
                TextColor="Black"
                HeightRequest="48"/>
 
-            <Button Text="Забыли пароль?" FontSize="14" HorizontalOptions="End" TextColor="Blue" BackgroundColor="Transparent" Clicked="ForgotPasswordCkicked"/>
+            <Button Text="Forgot password?" FontSize="14" HorizontalOptions="End" TextColor="Blue" BackgroundColor="Transparent" Clicked="ForgotPasswordCkicked"/>
 
             <Button x:Name="LoginButton"
                 Text="Login"
@@ -82,20 +82,20 @@
                 <Label VerticalOptions="Start">
                     <Label.FormattedText>
                         <FormattedString>
-                            <Span Text="Я соглашаюсь с "
+                            <Span Text="I agree with "
                           x:Name="AgreeSpan"
                           TextColor="Black"/>
-                            <Span Text="Условиями использования&#x0a;"
+                            <Span Text="Terms rules&#x0a;"
                           TextDecorations="Underline"
                           TextColor="Blue">
                                 <Span.GestureRecognizers>
                                     <TapGestureRecognizer Tapped="OnTermsTapped"/>
                                 </Span.GestureRecognizers>
                             </Span>
-                            <Span Text="и "
+                            <Span Text="and "
                           x:Name="AndSpan"
                           TextColor="Black"/>
-                            <Span Text="Политикой конфиденциальности"
+                            <Span Text="Privacy rules"
                           TextDecorations="Underline"
                           TextColor="Blue">
                                 <Span.GestureRecognizers>

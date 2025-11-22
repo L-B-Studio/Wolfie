@@ -48,13 +48,13 @@
             <!-- Основной контент -->
             <Label Text="Create Account" FontSize="20" FontAttributes="Bold" FontFamily="MetalMania" HorizontalOptions="Center"/>
 
-            <Entry x:Name="NicknameEntry" Placeholder="Anonymous228" PlaceholderColor="Gray" BackgroundColor="#F5F5F5" TextColor="Black" HeightRequest="48"/>
+            <Entry x:Name="NicknameEntry" Placeholder="Example" PlaceholderColor="Gray" BackgroundColor="#F5F5F5" TextColor="Black" HeightRequest="48"/>
             <DatePicker x:Name="BirthdayDatePicker" BackgroundColor="#F5F5F5" TextColor="Black" HeightRequest="48" MaximumDate="{x:Static sys:DateTime.Today}"/>
             <Entry x:Name="EmailEntry" Placeholder="example@gmail.com" Keyboard="Email" PlaceholderColor="Gray" BackgroundColor="#F5F5F5" TextColor="Black" HeightRequest="48"/>
-            <Entry x:Name="PasswordCreateEntry" Placeholder="Придумайте пароль" IsPassword="True" BackgroundColor="#F5F5F5" TextColor="Black" HeightRequest="48"/>
-            <Entry x:Name="PasswordAgainEntry" Placeholder="Подтвердите пароль" IsPassword="True" BackgroundColor="#F5F5F5" TextColor="Black" HeightRequest="48"/>
+            <Entry x:Name="PasswordCreateEntry" Placeholder="Create password" IsPassword="True" BackgroundColor="#F5F5F5" TextColor="Black" HeightRequest="48"/>
+            <Entry x:Name="PasswordAgainEntry" Placeholder="Repeat password" IsPassword="True" BackgroundColor="#F5F5F5" TextColor="Black" HeightRequest="48"/>
 
-            <Button x:Name="RegistrationButton" Text="Registration" BackgroundColor="Black" TextColor="White" CornerRadius="8" HeightRequest="48" Clicked="RegistrationButtonClicked"/>
+            <Button x:Name="RegistrationButton" Text="Register" BackgroundColor="Black" TextColor="White" CornerRadius="8" HeightRequest="48" Clicked="RegistrationButtonClicked"/>
 
             <!-- Соглашение -->
             <StackLayout Orientation="Horizontal" Margin="10" HorizontalOptions="Center">
@@ -65,20 +65,20 @@
                 <Label VerticalOptions="Start">
                     <Label.FormattedText>
                         <FormattedString>
-                            <Span Text="Я соглашаюсь с "
+                            <Span Text="I agree with "
                           x:Name="AgreeSpan"
                           TextColor="Black"/>
-                            <Span Text="Условиями использования&#x0a;"
+                            <Span Text="Terms rules&#x0a;"
                           TextDecorations="Underline"
                           TextColor="Blue">
                                 <Span.GestureRecognizers>
                                     <TapGestureRecognizer Tapped="OnTermsTapped"/>
                                 </Span.GestureRecognizers>
                             </Span>
-                            <Span Text="и "
+                            <Span Text="and "
                           x:Name="AndSpan"
                           TextColor="Black"/>
-                            <Span Text="Политикой конфиденциальности"
+                            <Span Text="Privacy rules"
                           TextDecorations="Underline"
                           TextColor="Blue">
                                 <Span.GestureRecognizers>

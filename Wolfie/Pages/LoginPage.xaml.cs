@@ -31,38 +31,46 @@ public partial class LoginPage : ContentPage
 
     private async void OnMessageReceived(string msg)
     {
-        var packet = JsonSerializer.Deserialize<JsonPackage>(msg);
-
-        if (packet == null || packet.body == null)
-            return;
-
-        await MainThread.InvokeOnMainThreadAsync(async () =>
+        try
         {
-            // Достаём значение body["value"]
+            var packet = JsonSerializer.Deserialize<JsonPackage>(msg);
+            if (packet == null || string.IsNullOrWhiteSpace(packet.header)) return;
+            if (packet.body == null) packet.body = new Dictionary<string, string>();
 
-            switch (packet.header.Trim().ToLower())
+            await MainThread.InvokeOnMainThreadAsync(async () =>
             {
-                case "error":
+                // Достаём значение body["value"]
 
-                    packet.body.TryGetValue("error", out string error);
-                    error = error?.Trim().ToLower();
-                    if (error == "invalid_credentials")
-                    {
-                        await DisplayAlertAsync("Ошибка", "Почта или пароль не правильные", "Ок");
-                    }
-                    break;
+                switch (packet.header.Trim().ToLower())
+                {
+                    case "error":
 
-                case "success":
+                        packet.body.TryGetValue("error", out string error);
+                        error = error?.Trim().ToLower();
+                        if (error == "invalid_credentials")
+                        {
+                            await DisplayAlertAsync("Ошибка", "Почта или пароль не правильные", "Ок");
+                        }
+                        break;
 
-                    packet.body.TryGetValue("success", out string sucess);
-                    sucess = sucess?.Trim().ToLower();
-                    if (sucess == "log_ok")
-                    {
-                        await DisplayAlertAsync("Успех", "Регистрация выполнена!", "Войти");
-                    }
-                    break;
-            }
-        });
+                    case "success":
+
+                        packet.body.TryGetValue("success", out string sucess);
+                        sucess = sucess?.Trim().ToLower();
+                        if (sucess == "log_ok")
+                        {
+                            await DisplayAlertAsync("SUCCESS", "You have loggined!", "Enter");
+                            await Task.Delay(100);
+                        }
+                        break;
+                    default:return;
+                }
+            });
+        }
+        catch(Exception ex)
+        {
+            await DisplayAlertAsync("Error" , ex.Message , "ok");
+        }
     }
 
 
@@ -73,33 +81,36 @@ public partial class LoginPage : ContentPage
 
         if (string.IsNullOrWhiteSpace(pass) || string.IsNullOrWhiteSpace(email))
         {
-            await DisplayAlertAsync("Error", "Все поля должны быть заполнены", "ok");
+            await DisplayAlertAsync("Error", "All rows must be filled", "ok");
             return;
         }
 
         if (!IsValidEmail(email))
         {
-            await DisplayAlertAsync("Error", "Напишите существующую почту", "ok");
+            await DisplayAlertAsync("Error", "Write real email", "ok");
             return;
         }
 
         if (!AgreeCheckBox.IsChecked)
         {
-            await DisplayAlertAsync("Ошибка", "согласитесь с правилами и политикой", "ок");
+            await DisplayAlertAsync("Error", "Agree with Terms and Privacy rules", "ок");
             return;
         }
         try
         {
             await _tcpService.SendJsonAsync("login_data", new()
             {
-                ["mail"] = email,
+                //["device model"] = DeviceInfo.Model,
+                //["device name"] = DeviceInfo.Name
+                ["email"] = email,
                 ["password"] = pass
             });
+            await Task.Delay(500);
 
         }
         catch (Exception er)
         {
-            await DisplayAlertAsync("Ошибка", er.Message, "ОК");
+            await DisplayAlertAsync("Error", er.Message, "ОК");
         }
 
     }

@@ -6,7 +6,6 @@
 
     <Border
         WidthRequest="500"
-        HeightRequest="800"
         Padding="20"
         BackgroundColor="White"
         HorizontalOptions="Center"
@@ -84,7 +83,7 @@ FontSize="16"
            TextChanged="CodeEntry_TextChanged"/>
 
             </HorizontalStackLayout>
-            <Button Text="Verify"
+            <Button Text="Verif Code"
                     BackgroundColor="Black"
                     TextColor="White"
                     CornerRadius="8"

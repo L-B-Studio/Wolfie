@@ -1,8 +1,4 @@
-﻿#if ANDROID
-using Android.App;
-using Wolfie;
-#endif
-using System.Net.Security;
+﻿using System.Net.Security;
 using System.Net.Sockets;
 using System.Security.Cryptography.X509Certificates;
 using System.Text;
@@ -25,8 +21,8 @@ namespace Wolfie.Services
 
         private readonly TimeSpan _reconnectDelay = TimeSpan.FromSeconds(5);
 
-        private readonly string _host = "172.24.64.1";
-        //private readonly string _host = "213.231.4.165";
+        //private readonly string _host = "172.24.64.1";
+        private readonly string _host = "213.231.4.165";
         //private readonly string _host = "192.168.168.118";
         private readonly int _port = 1234;
 
@@ -44,8 +40,8 @@ namespace Wolfie.Services
         // ✅ Загружаем server.cer из MAUI 
         private void LoadPinnedCertSync()
         {
-            //using var stream = FileSystem.OpenAppPackageFileAsync("server.cer").Result;
-            using var stream = FileSystem.OpenAppPackageFileAsync("testserver.cer").Result;
+            using var stream = FileSystem.OpenAppPackageFileAsync("server.cer").Result;
+            //using var stream = FileSystem.OpenAppPackageFileAsync("testserver.cer").Result;
             using var ms = new MemoryStream();
             stream.CopyTo(ms);
 

@@ -40,43 +40,43 @@ public partial class RegistrationPage : ContentPage
             string.IsNullOrWhiteSpace(createPass) ||
             string.IsNullOrWhiteSpace(againPass))
         {
-            await DisplayAlertAsync("Ошибка", "Все поля должны быть заполнены", "Ок");
+            await DisplayAlertAsync("Erorr", "All rows must be filled", "Ок");
             return;
         }
 
         if (!IsValidBirthdayDate(birthday))
         {
-            await DisplayAlertAsync("Ошибка", "Укажите корректную дату рождения (от 3 до 120 лет)", "Ок");
+            await DisplayAlertAsync("Error", "Write a normal date of birthday (from 3y.o to 120y.o)", "Ок");
             return;
         }
 
         if (createPass != againPass)
         {
-            await DisplayAlertAsync("Ошибка", "Пароли не совпадают", "Ок");
+            await DisplayAlertAsync("Error", "Passwords are different", "Ок");
             return;
         }
 
         if (createPass.Length < 6)
         {
-            await DisplayAlertAsync("Ошибка", "Пароль должен содержать минимум 6 символов", "Ок");
+            await DisplayAlertAsync("Error", "Password must be longer than 6 charapters", "Ок");
             return;
         }
 
         if (username.Length < 3)
         {
-            await DisplayAlertAsync("Ошибка", "Имя пользователя должно содержать минимум 3 символа", "Ок");
+            await DisplayAlertAsync("Error", "Name of user must be longer than 3 charapters", "Ок");
             return;
         }
 
         if (!IsValidEmail(email))
         {
-            await DisplayAlertAsync("Ошибка", "Введите корректную почту", "Ок");
+            await DisplayAlertAsync("Error", "Write real email", "Ок");
             return;
         }
 
         if (!AgreeCheckBox.IsChecked)
         {
-            await DisplayAlertAsync("Ошибка", "Необходимо согласиться с правилами", "Ок");
+            await DisplayAlertAsync("Error", "U must be agree with Privacy and Terms Rules", "Ок");
             return;
         }
 
@@ -88,41 +88,53 @@ public partial class RegistrationPage : ContentPage
                 ["password"] = createPass,
                 ["birthday"] = birthday.ToString()
             });
+            await Task.Delay(500);
         }
-        catch
+        catch(Exception ex)
         {
-            await DisplayAlertAsync("Ошибка", "Нет соединения с сервером", "Ок");
+            await DisplayAlertAsync("Error" , ex.Message , "Ок");
         }
     }
 
     private async void OnMessageReceived(string msg)
     {
-        var packet = JsonSerializer.Deserialize<JsonPackage>(msg);
-        await MainThread.InvokeOnMainThreadAsync(async () =>
+        try
         {
-            switch (packet.header.ToLower().Trim())
+            var packet = JsonSerializer.Deserialize<JsonPackage>(msg);
+            if (packet == null || string.IsNullOrWhiteSpace(packet.header)) return;
+            if (packet.body == null) packet.body = new Dictionary<string, string>();
+
+            await MainThread.InvokeOnMainThreadAsync(async () =>
             {
-                case "error":
-                    packet.body.TryGetValue("error", out string error);
-                    error = error?.Trim().ToLower();
-                    if (error == "email_exists")
-                        { await DisplayAlertAsync("Ошибка", "Почта уже зарегистрирована", "Ок"); }
-                    else if (error == "username_exists")
-                    {
-                        await DisplayAlertAsync("Ошибка", "Имя пользователя занято", "Ок");
-                    }
-                    break;
-                case "success":
-                    packet.body.TryGetValue("error", out string sucess);
-                    sucess = sucess?.Trim().ToLower();
-                    if (sucess == "reg_ok")
-                    {
-                        await DisplayAlertAsync("Успех", "Регистрация выполнена!", "Войти");
-                        await Navigation.PushAsync(new LoginPage());
-                    }
-                    break;
-            }
-        });
+                switch (packet.header.ToLower().Trim())
+                {
+                    case "error":
+                        packet.body.TryGetValue("error", out string error);
+                        error = error?.Trim().ToLower();
+                        if (error == "email_exists")
+                        { await DisplayAlertAsync("Error", "email have been registered yearlier", "Ок"); }
+                        //else if (error == "username_exists")
+                        //{
+                        //    await DisplayAlertAsync("Error", "Имя пользователя занято", "Ок");
+                        //}
+                        break;
+                    case "success":
+                        packet.body.TryGetValue("success", out string sucess);
+                        sucess = sucess?.Trim().ToLower();
+                        if (sucess == "reg_ok")
+                        {
+                            await DisplayAlertAsync("SUCCESS", "Registration have been complete!d", "Login");
+                            await Navigation.PushAsync(new LoginPage());
+                        }
+                        break;
+                    default:return; 
+                }
+            });
+        }
+        catch(Exception ex)
+        {
+            await DisplayAlertAsync("Error", ex.Message , "OK");
+        }
     }
 
     public static bool IsValidEmail(string email)

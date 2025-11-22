@@ -1,5 +1,6 @@
 using CommunityToolkit.Maui.Extensions;
 using CommunityToolkit.Maui.Views;
+using System.Linq.Expressions;
 using System.Text.Json;
 using Wolfie.Helpers;
 using Wolfie.Models;
@@ -18,19 +19,19 @@ public partial class EmailCodeVerifPopup : Popup
         _tcpService = SslClientHelper.GetService<SslClientService>();
         _tcpService.MessageReceived += OnMessageReceived;
 
-        // Отписка при закрытии попапа
-        this.Closed += (s, e) =>
-        {
-            _tcpService.MessageReceived -= OnMessageReceived;
-        };
+        
     }
 
     private async void OnMessageReceived(string msg)
     {
-        await MainThread.InvokeOnMainThreadAsync(async () =>
+
+        try
+        {
+            await MainThread.InvokeOnMainThreadAsync(async () =>
         {
             var packet = JsonSerializer.Deserialize<JsonPackage>(msg);
             if (packet == null || string.IsNullOrWhiteSpace(packet.header)) return;
+            if (packet.body == null) packet.body = new Dictionary<string, string>();
 
             switch (packet.header.Trim().ToLower())
             {
@@ -54,8 +55,13 @@ public partial class EmailCodeVerifPopup : Popup
                         await Application.Current.MainPage.ShowPopupAsync(newPopup);
                     }
                     break;
+                default:return;
             }
         });
+        }
+        catch(Exception ex){
+            await Application.Current.MainPage.DisplayAlertAsync("Error" , ex.Message , "Ok");
+        }
     }
 
     private void CodeEntry_TextChanged(object sender, TextChangedEventArgs e)
@@ -90,17 +96,18 @@ public partial class EmailCodeVerifPopup : Popup
 
         if (code.Length != 9)
         {
-            await Application.Current.MainPage.DisplayAlertAsync("Ошибка", "Введите корректный код", "OK");
+            await Application.Current.MainPage.DisplayAlertAsync("Error", "Write all 3 nums in all 3 columns", "OK");
             return;
         }
 
         try
         {
             await _tcpService.SendJsonAsync("verify_data", new() { ["code"] = code });
+            await Task.Delay(500);
         }
         catch (Exception ex)
         {
-            await Application.Current.MainPage.DisplayAlertAsync("Ошибка", ex.Message, "OK");
+            await Application.Current.MainPage.DisplayAlertAsync("Error", ex.Message, "Ok");
         }
     }
 }

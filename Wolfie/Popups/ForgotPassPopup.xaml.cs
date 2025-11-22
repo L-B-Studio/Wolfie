@@ -51,6 +51,7 @@ public partial class ForgotPassPopup : Popup
                             // НЕ закрываем текущий попап сразу
                         }
                         break;
+                    default: return;
                 }
             });
         }
@@ -77,7 +78,7 @@ public partial class ForgotPassPopup : Popup
 
         if (string.IsNullOrEmpty(email))
         {
-            await ShowAlert("Ошибка", "Все поля должны быть заполнены");
+            await ShowAlert("Error", "All rows must be filled");
             return;
         }
         try
