@@ -5,7 +5,7 @@
                CanBeDismissedByTappingOutsideOfPopup="False">
 
     <Border
-        WidthRequest="500"
+        WidthRequest="{OnPlatform Android=300, iOS=300, WinUI=500, MacCatalyst=500}"
         Padding="20"
         BackgroundColor="White"
         HorizontalOptions="Center"
@@ -87,7 +87,7 @@ FontSize="16"
                     BackgroundColor="Black"
                     TextColor="White"
                     CornerRadius="8"
-                    HeightRequest="48"
+                    WidthRequest="120"
                     Clicked="VerifButtonClicked"/>
 
         </VerticalStackLayout>

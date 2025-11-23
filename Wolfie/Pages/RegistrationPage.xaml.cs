@@ -100,6 +100,12 @@ public partial class RegistrationPage : ContentPage
     {
         try
         {
+            if (!IsJson(msg))
+            {
+                await DisplayAlertAsync("Error", "Get not JSON type message", "Ok");
+                return;
+            }
+
             var packet = JsonSerializer.Deserialize<JsonPackage>(msg);
             if (packet == null || string.IsNullOrWhiteSpace(packet.header)) return;
             if (packet.body == null) packet.body = new Dictionary<string, string>();
@@ -117,7 +123,7 @@ public partial class RegistrationPage : ContentPage
                         //{
                         //    await DisplayAlertAsync("Error", "Имя пользователя занято", "Ок");
                         //}
-                        break;
+                        return;
                     case "success":
                         packet.body.TryGetValue("success", out string sucess);
                         sucess = sucess?.Trim().ToLower();
@@ -127,14 +133,22 @@ public partial class RegistrationPage : ContentPage
                             await Navigation.PushAsync(new LoginPage());
                         }
                         break;
-                    default:return; 
+                    default: return;
                 }
             });
         }
-        catch(Exception ex)
+        catch (Exception ex)
         {
-            await DisplayAlertAsync("Error", ex.Message , "OK");
+            await DisplayAlertAsync("Error", ex.Message, "OK");
+            return;
         }
+    }
+
+    private bool IsJson(string msg)
+    {
+        msg = msg.Trim();
+        return (msg.StartsWith("{") && msg.EndsWith("}")) ||
+               (msg.StartsWith("[") && msg.EndsWith("]"));
     }
 
     public static bool IsValidEmail(string email)

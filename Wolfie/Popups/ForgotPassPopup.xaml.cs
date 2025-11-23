@@ -22,6 +22,12 @@ public partial class ForgotPassPopup : Popup
     {
         try
         {
+            if (!IsJson(msg))
+            {
+                await ShowAlert("Error", "Dont get Json package");
+                return;
+            }
+
             var packet = JsonSerializer.Deserialize<JsonPackage>(msg);
             if (packet == null || string.IsNullOrWhiteSpace(packet.header)) return;
             if (packet.body == null) packet.body = new Dictionary<string, string>();
@@ -37,7 +43,7 @@ public partial class ForgotPassPopup : Popup
                             await ShowAlert("Error", "This email is unreal");
                         else if (error == "email_dont_register")
                             await ShowAlert("Error", "This email is unregistered");
-                        break;
+                        return;
 
                     case "success":
                         packet.body.TryGetValue("success", out string success);
@@ -62,9 +68,17 @@ public partial class ForgotPassPopup : Popup
 
             await MainThread.InvokeOnMainThreadAsync(async () =>
             {
-                await Application.Current.MainPage.DisplayAlertAsync("Ошибка", ex.Message, "OK");
+                await ShowAlert("Ошибка", ex.Message);
+                return;
             });
         }
+    }
+
+    private bool IsJson(string msg)
+    {
+        msg = msg.Trim();
+        return (msg.StartsWith("{") && msg.EndsWith("}")) ||
+               (msg.StartsWith("[") && msg.EndsWith("]"));
     }
 
 

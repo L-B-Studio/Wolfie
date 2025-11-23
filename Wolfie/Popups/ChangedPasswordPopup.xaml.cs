@@ -15,13 +15,20 @@ public partial class ChangedPasswordPopup : Popup
 		InitializeComponent();
 		_client = SslClientHelper.GetService<SslClientService>();
 		_client.MessageReceived += OnMessageReceived;
-	}
+    }
 
     private async void OnMessageReceived(string msg)
     {
-        try{
+        try
+        {
             await MainThread.InvokeOnMainThreadAsync(async () =>
             {
+
+                if (!IsJson(msg))
+                {
+                    await ShowAlert("Error" , "Don't Json file");
+                    return;
+                }
                 var packet = JsonSerializer.Deserialize<JsonPackage>(msg);
                 if (packet == null || string.IsNullOrWhiteSpace(packet.header)) return;
                 if (packet.body == null) packet.body = new Dictionary<string, string>();
@@ -35,7 +42,7 @@ public partial class ChangedPasswordPopup : Popup
                             await ShowAlert("Error", "Password is repeated");
                         else if (error == "unaccess_token")
                             await ShowAlert("Error", "U're bitch  ⁄”⁄");
-                        break;
+                        return;
 
                     case "success":
                         packet.body.TryGetValue("success", out string success);
@@ -47,13 +54,25 @@ public partial class ChangedPasswordPopup : Popup
                             await CloseAsync();
                         }
                         break;
-                    default:return;
+                    default: return;
                 }
-            }); 
-        }catch(Exception ex)
-        {
-            await ShowAlert("Error" , ex.Message);
+            });
         }
+        catch (Exception ex)
+        {
+            await MainThread.InvokeOnMainThreadAsync(async () =>
+            {
+                await ShowAlert("Œ¯Ë·Í‡", ex.Message);
+                return;
+            });
+        }
+    }
+
+    private bool IsJson(string msg)
+    {
+        msg = msg.Trim();
+        return (msg.StartsWith("{") && msg.EndsWith("}")) ||
+               (msg.StartsWith("[") && msg.EndsWith("]"));
     }
 
     private async void OnConfirmClicked(object sender , EventArgs e)

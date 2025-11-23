@@ -19,7 +19,7 @@ public partial class EmailCodeVerifPopup : Popup
         _tcpService = SslClientHelper.GetService<SslClientService>();
         _tcpService.MessageReceived += OnMessageReceived;
 
-        
+
     }
 
     private async void OnMessageReceived(string msg)
@@ -29,6 +29,12 @@ public partial class EmailCodeVerifPopup : Popup
         {
             await MainThread.InvokeOnMainThreadAsync(async () =>
         {
+            if (!IsJson(msg))
+            {
+                await ShowAlert("Error", "Dont get Json");
+                return;
+            }
+
             var packet = JsonSerializer.Deserialize<JsonPackage>(msg);
             if (packet == null || string.IsNullOrWhiteSpace(packet.header)) return;
             if (packet.body == null) packet.body = new Dictionary<string, string>();
@@ -39,10 +45,10 @@ public partial class EmailCodeVerifPopup : Popup
                     packet.body.TryGetValue("error", out string error);
                     error = error?.Trim().ToLower();
                     if (error == "cant_send_email")
-                        await Application.Current.MainPage.DisplayAlertAsync("Error", "This email is unreal", "OK");
+                        await ShowAlert("Error", "This email is unreal");
                     else if (error == "invalid_code")
-                        await Application.Current.MainPage.DisplayAlertAsync("Error", "Invalid code", "OK");
-                    break;
+                        await ShowAlert("Error", "Invalid code");
+                    return;
 
                 case "success":
                     packet.body.TryGetValue("success", out string success);
@@ -55,13 +61,25 @@ public partial class EmailCodeVerifPopup : Popup
                         await Application.Current.MainPage.ShowPopupAsync(newPopup);
                     }
                     break;
-                default:return;
+                default: return;
             }
         });
         }
-        catch(Exception ex){
-            await Application.Current.MainPage.DisplayAlertAsync("Error" , ex.Message , "Ok");
+        catch (Exception ex)
+        {
+            await MainThread.InvokeOnMainThreadAsync(async () =>
+            {
+                await ShowAlert("Ошибка", ex.Message);
+                return;
+            });
         }
+    }
+
+    private bool IsJson(string msg)
+    {
+        msg = msg.Trim();
+        return (msg.StartsWith("{") && msg.EndsWith("}")) ||
+               (msg.StartsWith("[") && msg.EndsWith("]"));
     }
 
     private void CodeEntry_TextChanged(object sender, TextChangedEventArgs e)
@@ -109,5 +127,10 @@ public partial class EmailCodeVerifPopup : Popup
         {
             await Application.Current.MainPage.DisplayAlertAsync("Error", ex.Message, "Ok");
         }
+    }
+
+    private async Task ShowAlert(string title, string message)
+    {
+        await Application.Current.MainPage.DisplayAlertAsync(title, message, "OK");
     }
 }

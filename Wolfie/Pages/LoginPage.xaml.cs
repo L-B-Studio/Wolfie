@@ -33,45 +33,53 @@ public partial class LoginPage : ContentPage
     {
         try
         {
+            if (!IsJson(msg))
+            {
+                await DisplayAlertAsync("Ошибка", "Получены некорректные данные, не JSON", "Ок");
+                return;
+            }
+
             var packet = JsonSerializer.Deserialize<JsonPackage>(msg);
             if (packet == null || string.IsNullOrWhiteSpace(packet.header)) return;
             if (packet.body == null) packet.body = new Dictionary<string, string>();
 
             await MainThread.InvokeOnMainThreadAsync(async () =>
             {
-                // Достаём значение body["value"]
-
                 switch (packet.header.Trim().ToLower())
                 {
                     case "error":
-
                         packet.body.TryGetValue("error", out string error);
                         error = error?.Trim().ToLower();
                         if (error == "invalid_credentials")
-                        {
-                            await DisplayAlertAsync("Ошибка", "Почта или пароль не правильные", "Ок");
-                        }
-                        break;
+                            await DisplayAlertAsync("Ошибка", "Почта или пароль неправильные", "Ок");
+                        return;
 
                     case "success":
-
-                        packet.body.TryGetValue("success", out string sucess);
-                        sucess = sucess?.Trim().ToLower();
-                        if (sucess == "log_ok")
+                        packet.body.TryGetValue("success", out string success);
+                        success = success?.Trim().ToLower();
+                        if (success == "log_ok")
                         {
-                            await DisplayAlertAsync("SUCCESS", "You have loggined!", "Enter");
+                            await DisplayAlertAsync("SUCCESS", "You have logged in!", "Enter");
                             await Task.Delay(100);
                         }
-                        break;
-                    default:return;
+                        break ;
                 }
             });
         }
-        catch(Exception ex)
+        catch (Exception ex)
         {
-            await DisplayAlertAsync("Error" , ex.Message , "ok");
+            await DisplayAlertAsync("Error", ex.Message, "OK");
+            return;
         }
     }
+
+    private bool IsJson(string msg)
+    {
+        msg = msg.Trim();
+        return (msg.StartsWith("{") && msg.EndsWith("}")) ||
+               (msg.StartsWith("[") && msg.EndsWith("]"));
+    }
+
 
 
     private async void LoginButtonClicked(object sender, EventArgs e)

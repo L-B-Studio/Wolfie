@@ -4,8 +4,7 @@
                x:Class="Wolfie.Popups.ForgotPassPopup">
 
     <Border
-        WidthRequest="500"
-        HeightRequest="330"
+        WidthRequest="{OnPlatform Android=300, iOS=300, WinUI=500, MacCatalyst=500}"
         Padding="15"
         BackgroundColor="White"
         HorizontalOptions="Center"
@@ -39,14 +38,14 @@
                        BackgroundColor="#F5F5F5"
                        TextColor="Black"
                        HeightRequest="48"
-                       WidthRequest="400"/>
+                       WidthRequest="{OnPlatform Android=200, iOS=200, WinUI=400, MacCatalyst=400}"/>
 
                 <Button Text="Send code"
                         BackgroundColor="Black"
                         TextColor="White"
                         CornerRadius="8"
                         HeightRequest="48"
-                        WidthRequest="400"
+                        WidthRequest="{OnPlatform Android=200, iOS=200, WinUI=400, MacCatalyst=400}"
                         Clicked="SendCodeButtonClicked"/>
             </VerticalStackLayout>
 
