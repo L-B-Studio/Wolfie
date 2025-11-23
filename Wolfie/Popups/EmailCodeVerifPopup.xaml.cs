@@ -24,63 +24,58 @@ public partial class EmailCodeVerifPopup : Popup
 
     private async void OnMessageReceived(string msg)
     {
-
-        try
+        await MainThread.InvokeOnMainThreadAsync(async () =>
         {
-            await MainThread.InvokeOnMainThreadAsync(async () =>
-        {
-            if (!IsJson(msg))
-            {
-                await ShowAlert("Error", "Dont get Json");
-                return;
-            }
 
-            var packet = JsonSerializer.Deserialize<JsonPackage>(msg);
-            if (packet == null || string.IsNullOrWhiteSpace(packet.header)) return;
-            if (packet.body == null) packet.body = new Dictionary<string, string>();
-
-            switch (packet.header.Trim().ToLower())
+            try
             {
-                case "error":
-                    packet.body.TryGetValue("error", out string error);
-                    error = error?.Trim().ToLower();
-                    if (error == "cant_send_email")
-                        await ShowAlert("Error", "This email is unreal");
-                    else if (error == "invalid_code")
-                        await ShowAlert("Error", "Invalid code");
+                try
+                {
+                    JsonDocument.Parse(msg);
+                }
+                catch (Exception ex)
+                {
+                    await ShowAlert("Error", ex.Message);
                     return;
+                }
+                var packet = JsonSerializer.Deserialize<JsonPackage>(msg);
+                if (packet == null || string.IsNullOrWhiteSpace(packet.header)) return;
+                if (packet.body == null) packet.body = new Dictionary<string, string>();
 
-                case "success":
-                    packet.body.TryGetValue("success", out string success);
-                    success = success?.Trim().ToLower();
-                    if (success == "email_verified")
-                    {
-                        var newPopup = new ChangedPasswordPopup();
-                        await Task.Delay(100); // чтобы UI успел обновиться
-                        await CloseAsync();
-                        await Application.Current.MainPage.ShowPopupAsync(newPopup);
-                    }
-                    break;
-                default: return;
+                switch (packet.header.Trim().ToLower())
+                {
+                    case "error":
+                        packet.body.TryGetValue("error", out string error);
+                        error = error?.Trim().ToLower();
+                        if (error == "cant_send_email")
+                            await ShowAlert("Error", "This email is unreal");
+                        else if (error == "invalid_code")
+                            await ShowAlert("Error", "Invalid code");
+                        return;
+
+                    case "success":
+                        packet.body.TryGetValue("success", out string success);
+                        success = success?.Trim().ToLower();
+                        if (success == "email_verified")
+                        {
+                            var newPopup = new ChangedPasswordPopup();
+                            await Task.Delay(100); // чтобы UI успел обновиться
+                            await CloseAsync();
+                            await Application.Current.MainPage.ShowPopupAsync(newPopup);
+                        }
+                        break;
+                    default: return;
+                }
             }
-        });
-        }
-        catch (Exception ex)
-        {
-            await MainThread.InvokeOnMainThreadAsync(async () =>
+            catch (Exception ex)
             {
                 await ShowAlert("Ошибка", ex.Message);
                 return;
-            });
-        }
+
+            }
+        });
     }
 
-    private bool IsJson(string msg)
-    {
-        msg = msg.Trim();
-        return (msg.StartsWith("{") && msg.EndsWith("}")) ||
-               (msg.StartsWith("[") && msg.EndsWith("]"));
-    }
 
     private void CodeEntry_TextChanged(object sender, TextChangedEventArgs e)
     {

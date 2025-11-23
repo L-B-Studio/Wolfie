@@ -31,20 +31,26 @@ public partial class LoginPage : ContentPage
 
     private async void OnMessageReceived(string msg)
     {
-        try
+        await MainThread.InvokeOnMainThreadAsync(async () =>
         {
-            if (!IsJson(msg))
+            try
             {
-                await DisplayAlertAsync("Ошибка", "Получены некорректные данные, не JSON", "Ок");
-                return;
-            }
+                try
+                {
+                    JsonDocument.Parse(msg);
+                }
+                catch (Exception ex)
+                {
+                    await DisplayAlertAsync("Error", ex.Message, "Ok");
+                    return;
+                }
 
-            var packet = JsonSerializer.Deserialize<JsonPackage>(msg);
-            if (packet == null || string.IsNullOrWhiteSpace(packet.header)) return;
-            if (packet.body == null) packet.body = new Dictionary<string, string>();
 
-            await MainThread.InvokeOnMainThreadAsync(async () =>
-            {
+                var packet = JsonSerializer.Deserialize<JsonPackage>(msg);
+                if (packet == null || string.IsNullOrWhiteSpace(packet.header)) return;
+                if (packet.body == null) packet.body = new Dictionary<string, string>();
+
+
                 switch (packet.header.Trim().ToLower())
                 {
                     case "error":
@@ -62,22 +68,16 @@ public partial class LoginPage : ContentPage
                             await DisplayAlertAsync("SUCCESS", "You have logged in!", "Enter");
                             await Task.Delay(100);
                         }
-                        break ;
+                        break;
                 }
-            });
-        }
-        catch (Exception ex)
-        {
-            await DisplayAlertAsync("Error", ex.Message, "OK");
-            return;
-        }
-    }
 
-    private bool IsJson(string msg)
-    {
-        msg = msg.Trim();
-        return (msg.StartsWith("{") && msg.EndsWith("}")) ||
-               (msg.StartsWith("[") && msg.EndsWith("]"));
+            }
+            catch (Exception ex)
+            {
+                await DisplayAlertAsync("Error", ex.Message, "OK");
+                return;
+            }
+        });
     }
 
 

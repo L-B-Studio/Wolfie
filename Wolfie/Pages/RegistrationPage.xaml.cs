@@ -98,20 +98,25 @@ public partial class RegistrationPage : ContentPage
 
     private async void OnMessageReceived(string msg)
     {
-        try
+        await MainThread.InvokeOnMainThreadAsync(async () =>
         {
-            if (!IsJson(msg))
+            try
             {
-                await DisplayAlertAsync("Error", "Get not JSON type message", "Ok");
-                return;
-            }
+                try
+                {
+                    JsonDocument.Parse(msg);
+                }
+                catch (Exception ex)
+                {
+                    await DisplayAlertAsync("Error", ex.Message, "Ok");
+                    return;
+                }
 
-            var packet = JsonSerializer.Deserialize<JsonPackage>(msg);
-            if (packet == null || string.IsNullOrWhiteSpace(packet.header)) return;
-            if (packet.body == null) packet.body = new Dictionary<string, string>();
+                var packet = JsonSerializer.Deserialize<JsonPackage>(msg);
+                if (packet == null || string.IsNullOrWhiteSpace(packet.header)) return;
+                if (packet.body == null) packet.body = new Dictionary<string, string>();
 
-            await MainThread.InvokeOnMainThreadAsync(async () =>
-            {
+
                 switch (packet.header.ToLower().Trim())
                 {
                     case "error":
@@ -135,20 +140,13 @@ public partial class RegistrationPage : ContentPage
                         break;
                     default: return;
                 }
-            });
-        }
-        catch (Exception ex)
-        {
-            await DisplayAlertAsync("Error", ex.Message, "OK");
-            return;
-        }
-    }
-
-    private bool IsJson(string msg)
-    {
-        msg = msg.Trim();
-        return (msg.StartsWith("{") && msg.EndsWith("}")) ||
-               (msg.StartsWith("[") && msg.EndsWith("]"));
+            }
+            catch (Exception ex)
+            {
+                await DisplayAlertAsync("Error", ex.Message, "OK");
+                return;
+            }
+        });
     }
 
     public static bool IsValidEmail(string email)

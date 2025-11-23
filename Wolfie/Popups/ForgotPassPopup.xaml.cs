@@ -20,20 +20,26 @@ public partial class ForgotPassPopup : Popup
 
     private async void OnMessageReceivedAsync(string msg)
     {
-        try
+
+        await MainThread.InvokeOnMainThreadAsync(async () =>
         {
-            if (!IsJson(msg))
+            try
             {
-                await ShowAlert("Error", "Dont get Json package");
-                return;
-            }
+                try
+                {
+                    JsonDocument.Parse(msg);
+                }
+                catch (Exception ex)
+                {
+                    await ShowAlert("Error", ex.Message);
+                    return;
+                }
+                
 
-            var packet = JsonSerializer.Deserialize<JsonPackage>(msg);
-            if (packet == null || string.IsNullOrWhiteSpace(packet.header)) return;
-            if (packet.body == null) packet.body = new Dictionary<string, string>();
+                var packet = JsonSerializer.Deserialize<JsonPackage>(msg);
+                if (packet == null || string.IsNullOrWhiteSpace(packet.header)) return;
+                if (packet.body == null) packet.body = new Dictionary<string, string>();
 
-            await MainThread.InvokeOnMainThreadAsync(async () =>
-            {
                 switch (packet.header.Trim().ToLower())
                 {
                     case "error":
@@ -59,30 +65,18 @@ public partial class ForgotPassPopup : Popup
                         break;
                     default: return;
                 }
-            });
-        }
-        catch (Exception ex)
-        {
-            // логируем исключение, не крашим приложение
-            Console.WriteLine($"MessageReceived error: {ex}");
 
-            await MainThread.InvokeOnMainThreadAsync(async () =>
+            }
+            catch (Exception ex)
             {
+                // логируем исключение, не крашим приложение
+                Console.WriteLine($"MessageReceived error: {ex}");
+
                 await ShowAlert("Ошибка", ex.Message);
                 return;
-            });
-        }
+            }
+        });
     }
-
-    private bool IsJson(string msg)
-    {
-        msg = msg.Trim();
-        return (msg.StartsWith("{") && msg.EndsWith("}")) ||
-               (msg.StartsWith("[") && msg.EndsWith("]"));
-    }
-
-
-
 
 
     private async void SendCodeButtonClicked(object sender, EventArgs e)
@@ -100,13 +94,14 @@ public partial class ForgotPassPopup : Popup
             await _tcpService.SendJsonAsync("forgotpass_data", new() { ["email"] = email });
             await Task.Delay(500);
         }
-        catch (Exception ex) { 
+        catch (Exception ex)
+        {
             await ShowAlert("Error: ", ex.Message);
         }
 
     }
 
-    private async Task ShowAlert(string title, string message)  
+    private async Task ShowAlert(string title, string message)
     {
         await Application.Current.MainPage.DisplayAlertAsync(title, message, "OK");
     }

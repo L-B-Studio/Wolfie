@@ -9,24 +9,28 @@ namespace Wolfie.Popups;
 
 public partial class ChangedPasswordPopup : Popup
 {
-	private readonly SslClientService _client;
-	public ChangedPasswordPopup()
-	{
-		InitializeComponent();
-		_client = SslClientHelper.GetService<SslClientService>();
-		_client.MessageReceived += OnMessageReceived;
+    private readonly SslClientService _client;
+    public ChangedPasswordPopup()
+    {
+        InitializeComponent();
+        _client = SslClientHelper.GetService<SslClientService>();
+        _client.MessageReceived += OnMessageReceived;
     }
 
     private async void OnMessageReceived(string msg)
     {
-        try
+        await MainThread.InvokeOnMainThreadAsync(async () =>
         {
-            await MainThread.InvokeOnMainThreadAsync(async () =>
+            try
             {
 
-                if (!IsJson(msg))
+                try
                 {
-                    await ShowAlert("Error" , "Don't Json file");
+                    JsonDocument.Parse(msg);
+                }
+                catch(Exception ex)
+                {
+                    await ShowAlert("Error", ex.Message);
                     return;
                 }
                 var packet = JsonSerializer.Deserialize<JsonPackage>(msg);
@@ -56,49 +60,41 @@ public partial class ChangedPasswordPopup : Popup
                         break;
                     default: return;
                 }
-            });
-        }
-        catch (Exception ex)
-        {
-            await MainThread.InvokeOnMainThreadAsync(async () =>
+            }
+            catch (Exception ex)
             {
                 await ShowAlert("Ошибка", ex.Message);
                 return;
-            });
-        }
+
+            }
+        });
     }
 
-    private bool IsJson(string msg)
+    private async void OnConfirmClicked(object sender, EventArgs e)
     {
-        msg = msg.Trim();
-        return (msg.StartsWith("{") && msg.EndsWith("}")) ||
-               (msg.StartsWith("[") && msg.EndsWith("]"));
-    }
+        string newPass = NewPasswordEntry.Text?.Trim();
+        string repeatPass = RepeatPasswordEntry.Text?.Trim();
 
-    private async void OnConfirmClicked(object sender , EventArgs e)
-	{
-		string newPass = NewPasswordEntry.Text?.Trim();
-		string repeatPass = RepeatPasswordEntry.Text?.Trim();
-
-		if (string.IsNullOrWhiteSpace(newPass) || string.IsNullOrWhiteSpace(repeatPass))
-		{
+        if (string.IsNullOrWhiteSpace(newPass) || string.IsNullOrWhiteSpace(repeatPass))
+        {
             await ShowAlert("Error", "All args isn't filled");
             return;
         }
 
-		if (newPass != repeatPass) {
-			await ShowAlert("Error", "Passwords must be одинаковые");
+        if (newPass != repeatPass)
+        {
+            await ShowAlert("Error", "Passwords must be одинаковые");
             return;
-		}
+        }
 
-		try
-		{
-			await _client.SendJsonAsync("changedpass_data;" , new(){ ["password"] = newPass });
+        try
+        {
+            await _client.SendJsonAsync("changedpass_data;", new() { ["password"] = newPass });
             await Task.Delay(500);
-			//await ShowAlert("SUCCESS" , "Try to login with new password now");
-			//await CloseAsync();
-		}
-		catch (Exception ex) { await ShowAlert("Error", ex.Message); }
+            //await ShowAlert("SUCCESS" , "Try to login with new password now");
+            //await CloseAsync();
+        }
+        catch (Exception ex) { await ShowAlert("Error", ex.Message); }
     }
 
     private async Task ShowAlert(string title, string message)
