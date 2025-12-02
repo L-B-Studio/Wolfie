@@ -21,9 +21,10 @@ namespace Wolfie.Services
 
         private readonly TimeSpan _reconnectDelay = TimeSpan.FromSeconds(5);
 
-        //private readonly string _host = "172.24.64.1";
-        private readonly string _host = "213.231.4.165";
-        //private readonly string _host = "192.168.168.118";
+        private readonly string _host = "172.19.48.1"; // local server
+        //private readonly string _host = "213.231.4.165"; // local misha's server
+        //private readonly string _host = "192.168.168.118"; // main server
+        //private readonly string _host = "10.2.206.81"; // local 17cab
         private readonly int _port = 1234;
 
         private bool _isConnecting = false;
@@ -40,8 +41,9 @@ namespace Wolfie.Services
         // ✅ Загружаем server.cer из MAUI 
         private void LoadPinnedCertSync()
         {
-            using var stream = FileSystem.OpenAppPackageFileAsync("server.cer").Result;
-            //using var stream = FileSystem.OpenAppPackageFileAsync("testserver.cer").Result;
+            //using var stream = FileSystem.OpenAppPackageFileAsync("server.cer").Result;
+            using var stream = FileSystem.OpenAppPackageFileAsync("testserver.cer").Result;
+            //using var stream = FileSystem.OpenAppPackageFileAsync("academictestserv.cer").Result;
             using var ms = new MemoryStream();
             stream.CopyTo(ms);
 

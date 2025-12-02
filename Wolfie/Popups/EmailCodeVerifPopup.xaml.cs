@@ -12,14 +12,16 @@ public partial class EmailCodeVerifPopup : Popup
 {
     private readonly SslClientService _tcpService;
     private bool _isEditing = false;
+    private string _email;
+    private bool _fromRegister;
 
-    public EmailCodeVerifPopup()
+    public EmailCodeVerifPopup(string email , bool fromRegister = false)
     {
         InitializeComponent();
         _tcpService = SslClientHelper.GetService<SslClientService>();
         _tcpService.MessageReceived += OnMessageReceived;
-
-
+        _email = email;
+        _fromRegister = fromRegister;
     }
 
     private async void OnMessageReceived(string msg)
@@ -47,21 +49,30 @@ public partial class EmailCodeVerifPopup : Popup
                     case "error":
                         packet.body.TryGetValue("error", out string error);
                         error = error?.Trim().ToLower();
-                        if (error == "cant_send_email")
-                            await ShowAlert("Error", "This email is unreal");
-                        else if (error == "invalid_code")
+                        //if (error == "cant_send_email")
+                        //    await ShowAlert("Error", "This email is unreal");
+                        if (error == "emailcode_failed;invalid_code")
+                        {
                             await ShowAlert("Error", "Invalid code");
+                        }
+                        if (error == "registration_failed;unaccess_token")
+                            await ShowAlert("Error", "U're bitch  ЪУЪ");
                         return;
 
                     case "success":
                         packet.body.TryGetValue("success", out string success);
                         success = success?.Trim().ToLower();
-                        if (success == "email_verified")
+                        if (success == "forgotpass_sucess;email_verified")
                         {
                             var newPopup = new ChangedPasswordPopup();
                             await Task.Delay(100); // чтобы UI успел обновиться
                             await CloseAsync();
                             await Application.Current.MainPage.ShowPopupAsync(newPopup);
+                        }
+                        else if (success == "registration_sucess;email_verified")
+                        {
+                            await ShowAlert("SUCCESS", "Registration have been completed!" , "Enter");
+                            return;
                         }
                         break;
                     default: return;
@@ -69,7 +80,7 @@ public partial class EmailCodeVerifPopup : Popup
             }
             catch (Exception ex)
             {
-                await ShowAlert("Ошибка", ex.Message);
+                await ShowAlert("Error", ex.Message);
                 return;
 
             }
@@ -115,8 +126,15 @@ public partial class EmailCodeVerifPopup : Popup
 
         try
         {
-            await _tcpService.SendJsonAsync("verify_data", new() { ["code"] = code });
-            await Task.Delay(500);
+            if (_fromRegister == true) 
+            {
+                await _tcpService.SendJsonAsync("register_verify_data", new() { ["email"] = _email, ["code"] = code });
+                await Task.Delay(500);
+            }
+            else{
+                await _tcpService.SendJsonAsync("forgotpass_verify_data", new() { ["email"] = _email, ["code"] = code });
+                await Task.Delay(500);
+            }
         }
         catch (Exception ex)
         {
@@ -124,8 +142,8 @@ public partial class EmailCodeVerifPopup : Popup
         }
     }
 
-    private async Task ShowAlert(string title, string message)
+    private async Task ShowAlert(string title, string message , string end = "OK")
     {
-        await Application.Current.MainPage.DisplayAlertAsync(title, message, "OK");
+        await Application.Current.MainPage.DisplayAlertAsync(title, message, end);
     }
 }

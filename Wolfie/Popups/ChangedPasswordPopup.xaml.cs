@@ -23,7 +23,6 @@ public partial class ChangedPasswordPopup : Popup
         {
             try
             {
-
                 try
                 {
                     JsonDocument.Parse(msg);
@@ -42,16 +41,16 @@ public partial class ChangedPasswordPopup : Popup
                     case "error":
                         packet.body.TryGetValue("error", out string error);
                         error = error?.Trim().ToLower();
-                        if (error == "pass_is_repeated")
+                        if (error == "changedpassword_failed;pass_is_repeated")
                             await ShowAlert("Error", "Password is repeated");
-                        else if (error == "unaccess_token")
+                        else if (error == "changedpassword_failed;unaccess_token")
                             await ShowAlert("Error", "U're bitch  ЪУЪ");
                         return;
 
                     case "success":
                         packet.body.TryGetValue("success", out string success);
                         success = success?.Trim().ToLower();
-                        if (success == "pass_changed")
+                        if (success == "changedpassword_success;pass_changed")
                         {
                             await ShowAlert("SUCCESS", "Try to login with new password now");
                             await Task.Delay(100); // чтобы UI успел обновиться

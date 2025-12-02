@@ -23,6 +23,7 @@ public partial class ForgotPassPopup : Popup
 
         await MainThread.InvokeOnMainThreadAsync(async () =>
         {
+            string email = EmailEntry.Text?.Trim();
             try
             {
                 try
@@ -42,21 +43,19 @@ public partial class ForgotPassPopup : Popup
 
                 switch (packet.header.Trim().ToLower())
                 {
-                    case "error":
+                    case "error": 
                         packet.body.TryGetValue("error", out string error);
                         error = error?.Trim().ToLower();
-                        if (error == "cant_send_mail")
-                            await ShowAlert("Error", "This email is unreal");
-                        else if (error == "email_dont_register")
+                        if (error == "forgotpass_failed;email_not_found")
                             await ShowAlert("Error", "This email is unregistered");
                         return;
 
-                    case "success":
+                    case "success": 
                         packet.body.TryGetValue("success", out string success);
                         success = success?.Trim().ToLower();
-                        if (success == "mail_sended")
+                        if (success == "forgotpass_success;confirmation_code_sent")
                         {
-                            var newPopup = new EmailCodeVerifPopup();
+                            var newPopup = new EmailCodeVerifPopup(email);
                             await Task.Delay(100); // чтобы UI успел обновиться
                             await CloseAsync();
                             await Application.Current.MainPage.ShowPopupAsync(newPopup);

@@ -5,59 +5,84 @@
     xmlns:toolkit="http://schemas.microsoft.com/dotnet/2022/maui/toolkit"
     x:Class="Wolfie.Popups.PrivacyPopup">
 
-    <Border Padding="20" BackgroundColor="White" WidthRequest="410">
+    <!-- Ресурсы с текстами вкладок -->
+    <toolkit:Popup.Resources>
+        <ResourceDictionary>
+            <x:String x:Key="GeneralText">
+                1. Мы обязуемся соблюдать конфиденциальность ваших данных и обеспечивать их защиту.
+Настоящая Политика конфиденциальности описывает, какие сведения мы собираем, как их используем и какие права вы имеете.
+Используя приложение, вы подтверждаете, что ознакомлены с данной Политикой.
+            </x:String>
+
+            <x:String x:Key="DataText">
+                2. Мы собираем только те данные, которые необходимы для работы приложения:
+- Данные аккаунта (Email, имя пользователя, фото профиля)
+- Сообщения и медиа (текст, изображения, файлы)
+- Контакты (с вашего согласия)
+- Техническая информация (модель устройства, ОС, IP, логи)
+- Поведенческие данные (время использования, действия в интерфейсе)
+            </x:String>
+
+            <x:String x:Key="UsageText">
+                3. Как мы используем данные:
+- Для работы сервиса: регистрация, синхронизация, резервное копирование
+- Для безопасности: защита от спама, мошенничества, контроль авторизации
+- Для улучшения приложения: исправление ошибок, тестирование функций
+- Для поддержки качества сервиса: обработка обращений
+4. Передача данных третьим лицам: только по закону или с вашего согласия
+5. Хранение данных: только на время, необходимое для работы сервиса
+            </x:String>
+
+            <x:String x:Key="RightsText">
+                6. Права пользователя:
+- Доступ к своим данным
+- Исправление неточных сведений
+- Удаление аккаунта ("право быть забытым")
+- Ограничение обработки данных
+- Переносимость данных
+- Отзыв согласия
+7. Защита данных: шифрование, TLS, хеширование паролей, контроль доступа
+8. Cookies и аналитика: только для настроек и улучшения приложения, без рекламных трекеров
+9. Изменения в политике: уведомления при изменениях функционала или законов
+            </x:String>
+        </ResourceDictionary>
+    </toolkit:Popup.Resources>
+
+    <Border Padding="20" BackgroundColor="White" WidthRequest="410" Stroke="LightGray" StrokeThickness="1">
         <VerticalStackLayout Spacing="12">
 
             <Label Text="Политика конфиденциальности"
-                   FontSize="22" FontAttributes="Bold"
+                   FontSize="22"
+                   FontAttributes="Bold"
                    HorizontalOptions="Center" />
 
-            <!-- Заголовки вкладок (кнопки) -->
+            <!-- Кнопки вкладок -->
             <HorizontalStackLayout Spacing="6" HorizontalOptions="Fill">
-                <Button Text="Общее" x:Name="TabBtnGeneral" Clicked="OnTabHeaderClicked" />
-                <Button Text="Данные" x:Name="TabBtnData" Clicked="OnTabHeaderClicked" />
-                <Button Text="Использование" x:Name="TabBtnUsage" Clicked="OnTabHeaderClicked" />
-                <Button Text="Права" x:Name="TabBtnRights" Clicked="OnTabHeaderClicked" />
+                <Button Text="Общее" x:Name="TabBtnGeneral" Clicked="OnTabHeaderClicked"/>
+                <Button Text="Данные" x:Name="TabBtnData" Clicked="OnTabHeaderClicked"/>
+                <Button Text="Использование" x:Name="TabBtnUsage" Clicked="OnTabHeaderClicked"/>
+                <Button Text="Права" x:Name="TabBtnRights" Clicked="OnTabHeaderClicked"/>
             </HorizontalStackLayout>
 
-            <!-- CarouselView как «контент вкладок» -->
+            <!-- CarouselView для текста вкладок -->
             <CarouselView x:Name="TabsCarousel" HeightRequest="440" IndicatorView="indicator">
-                <CarouselView.ItemsSource>
-                    <x:Array Type="{x:Type x:String}">
-                        <x:String>general</x:String>
-                        <x:String>data</x:String>
-                        <x:String>usage</x:String>
-                        <x:String>rights</x:String>
-                    </x:Array>
-                </CarouselView.ItemsSource>
-
                 <CarouselView.ItemTemplate>
                     <DataTemplate>
-                        <ScrollView>
+                        <ScrollView VerticalOptions="FillAndExpand">
                             <VerticalStackLayout Padding="6" Spacing="10">
-                                <ContentView>
-                                    <ContentView.Content>
-                                        <StackLayout>
-                                            <!-- Содержимое каждой вкладки определяется через привязку значения Item -->
-                                            <Label FontSize="15">
-                                                <Label.Text>
-                                                    <!-- используем разметку, чтобы не ломать XML -->
-                                                    <![CDATA[
-                                                        Здесь текст вкладки. В production можно заменить динамически в code-behind по значению BindingContext.
-                                                    ]]>
-                                                </Label.Text>
-                                            </Label>
-                                        </StackLayout>
-                                    </ContentView.Content>
-                                </ContentView>
+                                <Label FontSize="15"
+                                       Text="{Binding .}"
+                                       LineBreakMode="WordWrap"
+                                       LineHeight="1.3"
+                                       HorizontalOptions="FillAndExpand"
+                                       VerticalOptions="Start"/>
                             </VerticalStackLayout>
                         </ScrollView>
                     </DataTemplate>
                 </CarouselView.ItemTemplate>
             </CarouselView>
 
-            <IndicatorView x:Name="indicator" HorizontalOptions="Center" />
-
+            <IndicatorView x:Name="indicator" HorizontalOptions="Center"/>
         </VerticalStackLayout>
     </Border>
 </toolkit:Popup>

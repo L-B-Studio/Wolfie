@@ -1,4 +1,6 @@
 ﻿
+using Microsoft.EntityFrameworkCore.Metadata.Internal;
+using Microsoft.EntityFrameworkCore.Storage;
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
@@ -14,6 +16,7 @@ namespace Wolfie.Services
     {
         public ObservableCollection<ChatItem> Chats { get; } = new();
         public Dictionary<string, ObservableCollection<MessageItem>> Messages { get; } = new();
+        private LocalDbService _db = new LocalDbService();
 
         private readonly SslClientService _client;
         public ChatStorageService()
@@ -29,14 +32,17 @@ namespace Wolfie.Services
             switch (packet.header.ToLower().Trim())
             {
                 case "chatitem_data":
-
+                    string ChatId = packet.body["ChatId"].ToLower().Trim().ToString();
+                    string ChatTitle = packet.body["Username"].ToLower().Trim().ToString();
+                    string LastMessage = packet.body["LastMessage"].ToLower().Trim().ToString();
+                    
                     Chats.Add(new ChatItem
                     {
-                        ChatId = packet.body["ChatId"].ToLower().Trim(),
-                        Username = packet.body["Username"].ToLower().Trim(),
-                        LastMessage = packet.body["LastMessage"].ToLower().Trim()
+                        ChatId = ChatId,
+                        ChatTitle = ChatTitle,
+                        LastMessage = LastMessage
                     });
-
+                    _db.ListAddOrUpdateInDb(ChatId, ChatTitle, LastMessage);
                     break;
 
 
@@ -48,17 +54,22 @@ namespace Wolfie.Services
                     {
                         Messages[chatId] = new ObservableCollection<MessageItem>();
                     }
+                    string ? MessageId = packet.body["MessageId"].ToLower().Trim().ToString();
+                    string? Sender = packet.body["Sender"].ToLower().Trim().ToString();
+                    string ? Getter = packet.body["Getter"].ToLower().Trim().ToString();
+                    string ? Message = packet.body["Message"].ToLower().Trim().ToString();
+                    DateTime? MessageTime = DateTime.Parse(packet.body["MessageTime"]);
 
                     // Добавляем сообщение
                     Messages[chatId].Add(new MessageItem
                     {
-                        ChatId = chatId,
-                        Sender = packet.body["Sender"].ToLower().Trim(),
-                        Getter = packet.body["Getter"].ToLower().Trim(),
-                        Message = packet.body["Message"].ToLower().Trim(),
-                        MessageTime = DateTime.Parse(packet.body["MessageTime"])
+                        MessageId = MessageId,
+                        Sender = Sender,
+                        Getter = Getter,
+                        Message = Message,
+                        MessageTime = MessageTime
                     });
-
+                    _db.MessageAddOrUpdateInDb(chatId, MessageId , Sender , Getter , Message  , MessageTime);
 
                     break;
             }
@@ -74,11 +85,12 @@ namespace Wolfie.Services
         }
 
 
-        public void AddMessage(string chatId, string sender, string text)
+        public void AddMessage(string chatId , string messageId, string sender, string getter , string text)
         {
             var msg = new MessageItem
             {
-                ChatId = chatId,
+                MessageId = messageId,
+                Getter = getter,
                 Sender = sender,
                 Message = text,
                 MessageTime = DateTime.Now

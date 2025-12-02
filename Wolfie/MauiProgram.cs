@@ -18,7 +18,7 @@ namespace Wolfie
                     fonts.AddFont("PermanentMarker-Regular.tёtf", "PermanentMarker");
                     fonts.AddFont("OpenSans-Regular.ttf", "OpenSansRegular");
                     fonts.AddFont("OpenSans-Semibold.ttf", "OpenSansSemibold");
-                }).UseMauiCommunityToolkit();
+                }).UseMauiCommunityToolkit().UseMauiCommunityToolkitMediaElement();
 
 #if DEBUG
             builder.Logging.AddDebug();

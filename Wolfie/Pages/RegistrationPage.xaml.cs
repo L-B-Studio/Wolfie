@@ -100,6 +100,7 @@ public partial class RegistrationPage : ContentPage
     {
         await MainThread.InvokeOnMainThreadAsync(async () =>
         {
+            string email = EmailEntry.Text?.Trim();
             try
             {
                 try
@@ -122,20 +123,21 @@ public partial class RegistrationPage : ContentPage
                     case "error":
                         packet.body.TryGetValue("error", out string error);
                         error = error?.Trim().ToLower();
-                        if (error == "email_exists")
+                        if (error == "registration_failed;email_exists")
                         { await DisplayAlertAsync("Error", "email have been registered yearlier", "Ок"); }
-                        //else if (error == "username_exists")
-                        //{
-                        //    await DisplayAlertAsync("Error", "Имя пользователя занято", "Ок");
-                        //}
+                        else if (error == "registration_failed;email_not_found")
+                        {
+                            await DisplayAlertAsync("Error", "It's unreal email , pls register real email", "Ок");
+                        }
                         return;
                     case "success":
                         packet.body.TryGetValue("success", out string sucess);
                         sucess = sucess?.Trim().ToLower();
-                        if (sucess == "reg_ok")
+                        if (sucess == "registration_success;ok")
                         {
-                            await DisplayAlertAsync("SUCCESS", "Registration have been complete!d", "Login");
-                            await Navigation.PushAsync(new LoginPage());
+                            var popup = new EmailCodeVerifPopup(email , true);
+                            await this.ShowPopupAsync(popup);
+                            await Task.Delay(100);
                         }
                         break;
                     default: return;
