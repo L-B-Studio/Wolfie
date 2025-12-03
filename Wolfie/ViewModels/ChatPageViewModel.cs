@@ -30,13 +30,15 @@ namespace Wolfie.ViewModels
 
         public ChatItem Chat { get; private set; }
 
+        public MessageItem Message { get; private set; }
 
         public Command SendCommand { get; }
 
 
-        public ChatPageViewModel(ChatItem chat, ChatStorageService storage)
+        public ChatPageViewModel(ChatItem chat,MessageItem message , ChatStorageService storage)
         {
             Chat = chat;
+            Message = message;
             _storage = storage;
             Messages = _storage.GetMessages(chat.ChatId);
 
@@ -46,7 +48,7 @@ namespace Wolfie.ViewModels
                 if (string.IsNullOrWhiteSpace(InputText)) return;
 
 
-                _storage.AddMessage(chat.ChatId, "Me", InputText);
+                _storage.AddMessage(chat.ChatId,message.MessageId , message.Sender , message.Getter ,  InputText);
                 InputText = string.Empty;
             });
         }
