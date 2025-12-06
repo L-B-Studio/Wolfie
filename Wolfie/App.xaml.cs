@@ -1,13 +1,30 @@
 ﻿using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Maui.Platform; // важно
+using Microsoft.Maui.Platform;
+using Wolfie.Helpers;
+using Wolfie.Pages;
+using Wolfie.Services;
+using Wolfie.Storage;
+using Wolfie.ViewModels; // важно
 
 namespace Wolfie
 {
     public partial class App : Application
     {
-        public App()
+        private readonly SslClientService _client;
+
+        public App(IServiceProvider services)
         {
             InitializeComponent();
+            ThemeService.Init();
+
+            _client = services.GetRequiredService<SslClientService>();
+            _ = InitAsync();
+        }
+
+        private async Task InitAsync()
+        {
+            await _client.InitializeAsync();
+            await _client.EnsureConnectedAsync();
         }
 
         protected override Window CreateWindow(IActivationState? activationState)

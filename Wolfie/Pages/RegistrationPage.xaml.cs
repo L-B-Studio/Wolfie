@@ -9,13 +9,15 @@ namespace Wolfie.Pages;
 
 public partial class RegistrationPage : ContentPage
 {
-    private bool _isDarktheme = false;
     private readonly SslClientService _tcpService;
     public RegistrationPage()
     {
         InitializeComponent();
+        NavigationPage.SetHasNavigationBar(this, false);
+        NavigationPage.SetBackButtonTitle(this, null);
         _tcpService = SslClientHelper.GetService<SslClientService>();
         _tcpService.MessageReceived += OnMessageReceived;
+        ApplyTheme();
     }
 
     protected override void OnDisappearing()
@@ -124,23 +126,26 @@ public partial class RegistrationPage : ContentPage
                         packet.body.TryGetValue("error", out string error);
                         error = error?.Trim().ToLower();
                         if (error == "registration_failed;email_exists")
-                        { await DisplayAlertAsync("Error", "email have been registered yearlier", "Ок"); }
+                        { await DisplayAlertAsync("Error", $"{msg}\nemail have been registered yearlier", "Ок"); }
                         else if (error == "registration_failed;email_not_found")
                         {
-                            await DisplayAlertAsync("Error", "It's unreal email , pls register real email", "Ок");
+                            await DisplayAlertAsync("Error", $"{msg}\nIt's unreal email , pls register real email", "Ок");
                         }
                         return;
                     case "success":
                         packet.body.TryGetValue("success", out string sucess);
                         sucess = sucess?.Trim().ToLower();
-                        if (sucess == "registration_success;ok")
+                        if (sucess == $"registration_success;ok")
                         {
                             var popup = new EmailCodeVerifPopup(email , true);
                             await this.ShowPopupAsync(popup);
                             await Task.Delay(100);
                         }
                         break;
-                    default: return;
+                    default:
+                        await DisplayAlertAsync("NONE" , msg , "ok");
+                        return;
+
                 }
             }
             catch (Exception ex)
@@ -177,52 +182,98 @@ public partial class RegistrationPage : ContentPage
         await Navigation.PushAsync(new LoginPage());
     }
 
-    private void OnThemeClicked(object sender, EventArgs e)
+    private void ApplyTheme()
     {
-        _isDarktheme = !_isDarktheme;
-
-        if (_isDarktheme)
+        if (ThemeService.IsDarkTheme)
         {
-            Application.Current.UserAppTheme = AppTheme.Dark;
-            ThemeButton.Source = "sun.png";
+            //page's background
+            MainLayout.BackgroundColor = Color.FromArgb("#121821");
+
+            //photos
             BackButton.Source = "back_white_button.png";
             Logo.Source = "light_logo.png";
-            MainLayout.BackgroundColor = Colors.Black;
+            ThemeButton.Source = "sun.png";
 
-            TitleLabel.TextColor = Colors.White;
-            //SubTitleLabel.TextColor = Colors.White;
-            AgreeSpan.TextColor = Colors.White;
-            AndSpan.TextColor = Colors.White;
-            RegistrationButton.BackgroundColor = Colors.White;
-            RegistrationButton.TextColor = Colors.Black;
+            //labels
+            TitleLabel.TextColor = Color.FromArgb("#E6E6E6");
+            CreateLabel.TextColor = Color.FromArgb("#E6E6E6");
+            AgreeText.TextColor = Color.FromArgb("#D8D8D8");
 
-            //CreateAccountLabel.TextColor = Colors.White;
-            //NicknameLabel.TextColor = Colors.White;
-            //BirthdayLabel.TextColor = Colors.White;
-            //EmailLabel.TextColor = Colors.White;
-            //PassLabel.TextColor = Colors.White;
+            //buttons
+            RegistrationButton.BackgroundColor = Color.FromArgb("#2980FF");
+            RegistrationButton.TextColor = Colors.White;
+
+            //entries
+            NicknameEntry.BackgroundColor = Color.FromArgb("#1D2633");
+            NicknameEntry.PlaceholderColor = Color.FromArgb("#8E9BAA");
+            BirthdayDatePicker.BackgroundColor = Color.FromArgb("#1D2633");
+            BirthdayDatePicker.TextColor = Color.FromArgb("#E6E6E6");
+            EmailEntry.BackgroundColor = Color.FromArgb("#1D2633");
+            EmailEntry.PlaceholderColor = Color.FromArgb("#8E9BAA");
+            PasswordCreateEntry.BackgroundColor = Color.FromArgb("#1D2633");
+            PasswordCreateEntry.PlaceholderColor = Color.FromArgb("#8E9BAA");
+            PasswordAgainEntry.BackgroundColor = Color.FromArgb("#1D2633");
+            PasswordAgainEntry.PlaceholderColor = Color.FromArgb("#8E9BAA");
+
+            //entries' text
+            NicknameEntry.TextColor = Color.FromArgb("#E6E6E6");
+            BirthdayDatePicker.TextColor = Color.FromArgb("#E6E6E6");
+            EmailEntry.TextColor = Color.FromArgb("#E6E6E6");
+            PasswordCreateEntry.TextColor = Color.FromArgb("#E6E6E6");
+            PasswordAgainEntry.TextColor = Color.FromArgb("#E6E6E6");
+
+            //Links
+            TermsLink.TextColor = Color.FromArgb("#5DA3FA");
+            PrivacyLink.TextColor = Color.FromArgb("#5DA3FA");
         }
         else
         {
-            Application.Current.UserAppTheme = AppTheme.Light;
-            ThemeButton.Source = "moon.png";
+            //page's background
+            MainLayout.BackgroundColor = Color.FromArgb("#F4F7FA");
+
+            //photos
             BackButton.Source = "back_button.png";
             Logo.Source = "logo.png";
-            MainLayout.BackgroundColor = Colors.White;
+            ThemeButton.Source = "moon.png";
 
-            TitleLabel.TextColor = Colors.Black;
-            //SubTitleLabel.TextColor = Colors.Black;
-            AgreeSpan.TextColor = Colors.Black;
-            AndSpan.TextColor = Colors.Black;
-            RegistrationButton.BackgroundColor = Colors.Black;
+            //labels
+            TitleLabel.TextColor = Color.FromArgb("#1A1A1A");
+            CreateLabel.TextColor = Color.FromArgb("#1A1A1A");
+            AgreeText.TextColor = Color.FromArgb("#1A1A1A");
+
+            //buttons
+            RegistrationButton.BackgroundColor = Color.FromArgb("#2979FF");
             RegistrationButton.TextColor = Colors.White;
 
-            //CreateAccountLabel.TextColor = Colors.Black;
-            //NicknameLabel.TextColor = Colors.Black;
-            //BirthdayLabel.TextColor = Colors.Black;
-            //EmailLabel.TextColor = Colors.Black;
-            //PassLabel.TextColor = Colors.Black;
+            //entries
+            NicknameEntry.BackgroundColor = Color.FromArgb("#E8ECF1");
+            NicknameEntry.PlaceholderColor = Color.FromArgb("#4A5058");
+            BirthdayDatePicker.BackgroundColor = Color.FromArgb("#E8ECF1");
+            BirthdayDatePicker.TextColor = Colors.Black;
+            EmailEntry.BackgroundColor = Color.FromArgb("#E8ECF1");
+            EmailEntry.PlaceholderColor = Color.FromArgb("#4A5058");
+            PasswordCreateEntry.BackgroundColor = Color.FromArgb("#E8ECF1");
+            PasswordCreateEntry.PlaceholderColor = Color.FromArgb("#4A5058");
+            PasswordAgainEntry.BackgroundColor = Color.FromArgb("#E8ECF1");
+            PasswordAgainEntry.PlaceholderColor = Color.FromArgb("#4A5058");
+
+            //entries' text
+            NicknameEntry.TextColor = Color.FromArgb("#1A1A1A");
+            BirthdayDatePicker.TextColor = Color.FromArgb("#1A1A1A");
+            EmailEntry.TextColor = Color.FromArgb("#1A1A1A");
+            PasswordCreateEntry.TextColor = Color.FromArgb("#1A1A1A");
+            PasswordAgainEntry.TextColor = Color.FromArgb("#1A1A1A");
+
+            //Links
+            TermsLink.TextColor = Color.FromArgb("#1565C0");
+            PrivacyLink.TextColor = Color.FromArgb("#1565C0");
         }
+    }
+
+    private void OnThemeClicked(object sender, EventArgs e)
+    {
+        ThemeService.ToggleTheme();
+        ApplyTheme();
     }
 
     private async void OnTermsTapped(object sender, EventArgs e)

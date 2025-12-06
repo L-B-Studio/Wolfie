@@ -8,76 +8,73 @@ namespace Wolfie.Services
 {
     public class LocalDbService
     {
-        //private readonly string? _dbpath = "LocalData\\app.db";
-
-        //public void ChatlistStartDataBase(string dbPath = "LocalData\\chatlist.db")
-        //{
-        //    using var db = new AppDbContext(dbPath);
-        //
-        //    db.Database.EnsureCreated();
-        //}
-        //public void MessageStartDataBase(string dbPath = "LocalData\\message.db")
-        //{
-        //    using var db = new AppDbContext(dbPath);
-        //
-        //    db.Database.EnsureCreated();
-        //}
-
-        public async void MessageAddOrUpdateInDb(string? ChatId = null,
-                                                    string? MessageId = null,
-                                                    string? Sender = null,
-                                                    string? Getter = null,
-                                                    string? Message = null,
-                                                    DateTime? MessageTime = null)
+        public async Task MessageAddOrUpdateInDb(
+    string? ChatId,
+    string? MessageId,
+    string? Sender,
+    string? Getter,
+    string? Message,
+    DateTime? MessageTime)
         {
-            string dbPath = $"LocalData\\{ChatId.Trim().ToLower()}.db";
-
+            string dbPath = $"LocalData/{ChatId.ToLower().Trim()}.db";
             using var db = new AppDbContext(dbPath);
 
-            db.Database.EnsureCreated();
+            await db.Database.EnsureCreatedAsync();
 
-            var messagechanged = db.Message.FirstOrDefault(c => c.MessageId == $"{MessageId}");
+            var message = db.Message.FirstOrDefault(x => x.MessageId == MessageId);
 
-            if (messagechanged != null)
+            if (message != null)
             {
-                messagechanged.Message += $"{Message}";
-                db.SaveChanges();
+                message.Message = Message;
             }
-            await db.Message.AddAsync(new MessageItem
+            else
             {
-                MessageId = MessageId,
-                Sender = Sender,
-                Getter = Getter,
-                Message = Message,
-                MessageTime = MessageTime
-            });
+                await db.Message.AddAsync(new MessageItem
+                {
+                    MessageId = MessageId,
+                    Sender = Sender,
+                    Getter = Getter,
+                    Message = Message,
+                    MessageTime = MessageTime
+                });
+            }
+
+            await db.SaveChangesAsync();
         }
 
-        public async void ListAddOrUpdateInDb(string? ChatId = null,
-                                                    string? ChatTitle = null,
-                                                    string? LastMessage = null)
+
+        public async Task ListAddOrUpdateInDb(
+                                              string? ChatId,
+                                              string? ChatTitle,
+                                              string? LastMessage)
         {
             string dbPath = "LocalData\\chatlist.db";
             using var db = new AppDbContext(dbPath);
 
-            db.Database.EnsureCreated();
+            await db.Database.EnsureCreatedAsync();
 
-            var chatlist = db.ChatList.FirstOrDefault(c => c.ChatId == $"{ChatId}");
+            var chat = db.ChatList.FirstOrDefault(x => x.ChatId == ChatId);
 
-            if (chatlist != null)
+            if (chat != null)
             {
-                chatlist.LastMessage += $"{LastMessage}";
-                db.SaveChanges();
+                chat.LastMessage = LastMessage;
+                chat.ChatTitle = ChatTitle;
             }
-            await db.ChatList.AddAsync(new ChatItem
+            else
             {
-                ChatId = ChatId,
-                ChatTitle = ChatTitle,
-                LastMessage = LastMessage
-            });
+                await db.ChatList.AddAsync(new ChatItem
+                {
+                    ChatId = ChatId,
+                    ChatTitle = ChatTitle,
+                    LastMessage = LastMessage
+                });
+            }
+
+            await db.SaveChangesAsync();
         }
 
-        public async void MessageDeleteInDb(string? ChatId = null, string? MessageId = null)
+
+        public async Task MessageDeleteInDb(string? ChatId = null, string? MessageId = null)
         {
             string dbPath = $"LocalData\\Users\\{ChatId.Trim().ToLower()}.db";
 
@@ -92,7 +89,7 @@ namespace Wolfie.Services
             }
         }
 
-        public async void ListDeleteInDb(string? ChatId = null, string dbPath = "LocalData\\Chats\\chatlist.db")
+        public async Task ListDeleteInDb(string? ChatId = null, string dbPath = "LocalData\\Chats\\chatlist.db")
         {
             //string dbPath = $"LocalData\\{ChatId.Trim().ToLower()}.db";
 

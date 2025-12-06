@@ -47,7 +47,7 @@ public partial class ForgotPassPopup : Popup
                         packet.body.TryGetValue("error", out string error);
                         error = error?.Trim().ToLower();
                         if (error == "forgotpass_failed;email_not_found")
-                            await ShowAlert("Error", "This email is unregistered");
+                            await ShowAlert("Error", $"{msg}\nThis email is unregistered");
                         return;
 
                     case "success": 

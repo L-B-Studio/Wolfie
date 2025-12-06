@@ -13,7 +13,7 @@ namespace Wolfie
 
             Routing.RegisterRoute(nameof(LoginPage), typeof(LoginPage));
 
-            //Routing.RegisterRoute(nameof(ChatListPage), typeof(ChatListPage));
+            Routing.RegisterRoute(nameof(ChatListPage), typeof(ChatListPage));
 
             //Routing.RegisterRoute(nameof(MessagePage), typeof(MessagePage));
         }

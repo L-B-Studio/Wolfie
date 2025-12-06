@@ -1,14 +1,17 @@
 <ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:mct="clr-namespace:CommunityToolkit.Maui.Behaviors;assembly=CommunityToolkit.Maui"
              x:Class="Wolfie.Pages.LoginPage"
-             x:Name="MainLayout" 
-             BackgroundColor="White"
-             >
+             x:Name="MainLayout">
+
+    <Page.Behaviors>
+        <mct:StatusBarBehavior StatusBarColor="Transparent" />
+    </Page.Behaviors>
 
     <ScrollView>
-        <VerticalStackLayout  Spacing="15" Padding="20" HorizontalOptions="Center">
+        <VerticalStackLayout Spacing="20" Padding="20" HorizontalOptions="Center">
 
-            <!-- Верхняя панель -->
+            <!-- Header -->
             <Grid Padding="10" ColumnSpacing="10">
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="*"/>
@@ -17,87 +20,98 @@
                 </Grid.ColumnDefinitions>
 
                 <StackLayout Grid.Column="0" Orientation="Horizontal" HorizontalOptions="Center" VerticalOptions="Center">
-                    <Image x:Name="Logo" Source="logo.png" WidthRequest="40" HeightRequest="40" Margin="0,0,10,0"/>
-                    <Label x:Name="TitleLabel" Text="Wolfie" FontSize="24" FontFamily="MetalMania" TextColor="Black" VerticalOptions="Center"/>
+                    <Image x:Name="Logo" WidthRequest="40" HeightRequest="40" Margin="0,0,10,0"/>
+                    <Label x:Name="TitleLabel" Text="Wolfie" FontSize="26" FontFamily="MetalMania" VerticalOptions="Center"/>
                 </StackLayout>
 
                 <ImageButton x:Name="ThemeButton"
                          Grid.Column="2"
-                         Source="moon.png"
-                         WidthRequest="40"
-                         HeightRequest="40"
+                         WidthRequest="36"
+                         HeightRequest="36"
                          BackgroundColor="Transparent"
                          Clicked="OnThemeClicked"
                          HorizontalOptions="End"
                          VerticalOptions="Center"/>
             </Grid>
 
-            <!-- Основной контент -->
-            <Label Text="Enter in Account" FontSize="20" FontAttributes="Bold" FontFamily="MetalMania" HorizontalOptions="Center"/>
+            <!-- Login header -->
+            <Label Text="Enter your account"
+                   x:Name="EnterLabel"
+                   FontSize="22"
+                   FontAttributes="Bold"
+                   FontFamily="MetalMania"
+                   HorizontalOptions="Center"/>
 
+            <!-- Email -->
             <Entry x:Name="EmailEntry"
                Placeholder="example@gmail.com"
-               PlaceholderColor="Gray"
-               BackgroundColor="#F5F5F5"
-               TextColor="Black"
-               HeightRequest="48"/>
+               PlaceholderColor="#8E9BAA"
+               TextColor="#E6E6E6"
+               HeightRequest="48"
+               Margin="0,5"
+               />
 
+            <!-- Password -->
             <Entry x:Name="PasswordEntry"
                Placeholder="Password"
                IsPassword="True"
-               BackgroundColor="#F5F5F5"
-               TextColor="Black"
-               HeightRequest="48"/>
+               TextColor="#E6E6E6"
+               HeightRequest="48"
+               Margin="0,5"
+               />
 
-            <Button Text="Forgot password?" FontSize="14" HorizontalOptions="End" TextColor="Blue" BackgroundColor="Transparent" Clicked="ForgotPasswordCkicked"/>
+            <Button Text="Forgot password?"
+                FontSize="14"
+                HorizontalOptions="End"
+                BackgroundColor="Transparent"
+                TextColor="#5DA3FA"
+                Clicked="ForgotPasswordCkicked"/>
 
+            <!-- Login button -->
             <Button x:Name="LoginButton"
                 Text="Login"
-                BackgroundColor="Black"
                 TextColor="White"
-                CornerRadius="8"
-                HeightRequest="48"
-                Clicked="LoginButtonClicked"/>
+                CornerRadius="10"
+                HeightRequest="50"
+                Clicked="LoginButtonClicked"
+                />
 
-            <Label x:Name="OrLable"
-        Text="Or" 
-    HorizontalOptions="Center" 
-    FontSize="14" 
-    TextColor="Black"/>
+            <!-- Or -->
+            <Label Text="OR"
+                FontSize="14"
+                HorizontalOptions="Center"
+                Margin="0,5"
+                   x:Name="OrLable"/>
 
+            <!-- Register -->
             <Button x:Name="RegistrationButton"
-                Text="Registration"
-                BackgroundColor="Black"
+                Text="Create account"
                 TextColor="White"
-                CornerRadius="8"
-                HeightRequest="48"
-                Clicked="RegistrationButtonClicked"/>
+                CornerRadius="10"
+                HeightRequest="50"
+                    Clicked="RegistrationButtonClicked"/>
 
-            <!-- Соглашение -->
-            <StackLayout Orientation="Horizontal" Margin="10" HorizontalOptions="Center">
+            <!-- Terms -->
+            <StackLayout Orientation="Horizontal" Margin="5" HorizontalOptions="Center">
                 <CheckBox x:Name="AgreeCheckBox"
                   VerticalOptions="Start"
-                  Color="Blue"/>
+                  Color="#2980FF"/>
 
-                <Label VerticalOptions="Start">
+                <Label VerticalOptions="Center" x:Name="AgreeText">
                     <Label.FormattedText>
                         <FormattedString>
-                            <Span Text="I agree with "
-                          x:Name="AgreeSpan"
-                          TextColor="Black"/>
-                            <Span Text="Terms rules&#x0a;"
-                          TextDecorations="Underline"
-                          TextColor="Blue">
+                            <Span Text="I agree with "/>
+                            <Span Text="Terms"
+                                  x:Name="TermsLink"
+                                  TextDecorations="Underline">
                                 <Span.GestureRecognizers>
                                     <TapGestureRecognizer Tapped="OnTermsTapped"/>
                                 </Span.GestureRecognizers>
                             </Span>
-                            <Span Text="and "
-                          x:Name="AndSpan"
-                          TextColor="Black"/>
-                            <Span Text="Privacy rules"
-                          TextDecorations="Underline"
-                          TextColor="Blue">
+                            <Span Text=" and " />
+                            <Span Text="Privacy"
+                                  x:Name="PrivacyLink"
+                                  TextDecorations="Underline"   >
                                 <Span.GestureRecognizers>
                                     <TapGestureRecognizer Tapped="OnPrivacyTapped"/>
                                 </Span.GestureRecognizers>

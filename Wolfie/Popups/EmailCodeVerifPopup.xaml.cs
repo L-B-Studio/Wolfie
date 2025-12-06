@@ -53,25 +53,25 @@ public partial class EmailCodeVerifPopup : Popup
                         //    await ShowAlert("Error", "This email is unreal");
                         if (error == "emailcode_failed;invalid_code")
                         {
-                            await ShowAlert("Error", "Invalid code");
+                            await ShowAlert("Error", $"{msg}\nInvalid code");
                         }
                         if (error == "registration_failed;unaccess_token")
-                            await ShowAlert("Error", "U're bitch  ЪУЪ");
+                            await ShowAlert("Error", $"{msg}\nU're bitch  ЪУЪ");
                         return;
 
                     case "success":
                         packet.body.TryGetValue("success", out string success);
                         success = success?.Trim().ToLower();
-                        if (success == "forgotpass_sucess;email_verified")
+                        if (success == "forgotpass_success;email_verified")
                         {
                             var newPopup = new ChangedPasswordPopup();
                             await Task.Delay(100); // чтобы UI успел обновиться
                             await CloseAsync();
                             await Application.Current.MainPage.ShowPopupAsync(newPopup);
                         }
-                        else if (success == "registration_sucess;email_verified")
+                        else if (success == "registration_success;email_verified")
                         {
-                            await ShowAlert("SUCCESS", "Registration have been completed!" , "Enter");
+                            await ShowAlert("SUCCESS", $"{msg}\nRegistration have been completed!" , "Enter");
                             return;
                         }
                         break;

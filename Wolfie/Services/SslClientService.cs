@@ -33,19 +33,16 @@ namespace Wolfie.Services
         public event Action Connected;
         public event Action Disconnected;
 
-        public SslClientService() { LoadPinnedCertSync(); }
+        public SslClientService() {  }
 
-        // ✅ Загружаем server.cer из MAUI 
-        private void LoadPinnedCertSync()
+        public async Task InitializeAsync()
         {
-            using var stream = FileSystem.OpenAppPackageFileAsync("ServerCertificate.cer").Result;
+            using var stream = await FileSystem.OpenAppPackageFileAsync("server_certificate.cer");
             using var ms = new MemoryStream();
-            stream.CopyTo(ms);
-
+            await stream.CopyToAsync(ms);
+            
             _localPinnedCert = X509CertificateLoader.LoadCertificate(ms.ToArray());
         }
-
-
 
         public async Task EnsureConnectedAsync()
         {

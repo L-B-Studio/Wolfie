@@ -11,50 +11,21 @@ namespace Wolfie.ViewModels
 {
     public class ChatPageViewModel : INotifyPropertyChanged
     {
-        public event PropertyChangedEventHandler PropertyChanged;
+        private readonly ChatStorageService _chatService;
 
+        public ObservableCollection<ChatItem> Chats => _chatService.Chats;
 
-        private readonly ChatStorageService _storage;
-
-
-        public ObservableCollection<MessageItem> Messages { get; private set; }
-
-
-        private string _inputText;
-        public string InputText
+        public ChatPageViewModel(ChatStorageService chatService)
         {
-            get => _inputText;
-            set { _inputText = value; OnPropertyChanged(); }
+            _chatService = chatService;
         }
 
+        public event PropertyChangedEventHandler? PropertyChanged;
 
-        public ChatItem Chat { get; private set; }
-
-        public MessageItem Message { get; private set; }
-
-        public Command SendCommand { get; }
-
-
-        public ChatPageViewModel(ChatItem chat,MessageItem message , ChatStorageService storage)
+        protected void OnPropertyChanged([CallerMemberName] string? propertyName = null)
         {
-            Chat = chat;
-            Message = message;
-            _storage = storage;
-            Messages = _storage.GetMessages(chat.ChatId);
-
-
-            SendCommand = new Command(() =>
-            {
-                if (string.IsNullOrWhiteSpace(InputText)) return;
-
-
-                _storage.AddMessage(chat.ChatId,message.MessageId , message.Sender , message.Getter ,  InputText);
-                InputText = string.Empty;
-            });
+            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
         }
-
-
-        void OnPropertyChanged([CallerMemberName] string? n = null)
-        => PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(n));
     }
+
 }

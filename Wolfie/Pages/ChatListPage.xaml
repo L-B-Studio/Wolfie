@@ -1,0 +1,73 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage
+    xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+    xmlns:mct="clr-namespace:CommunityToolkit.Maui.Behaviors;assembly=CommunityToolkit.Maui"
+    x:Class="Wolfie.Pages.ChatListPage"
+    BackgroundColor="#0E1621">
+
+    <Page.Behaviors>
+        <mct:StatusBarBehavior StatusBarColor="Transparent" />
+    </Page.Behaviors>
+
+    <VerticalStackLayout Padding="10">
+
+        <!-- Поиск -->
+            <!--<Image Source="search.png"
+                       WidthRequest="20"
+                       HeightRequest="20"
+                       Margin="0,0,8,0"/>-->
+            <Entry Placeholder="Search"
+                   BackgroundColor="#1C2B3A"
+                       TextColor="#5C6B7A"
+                       VerticalOptions="Center"
+                   CharacterSpacing="2"
+                   />
+
+            <!-- Список чатов -->
+        <CollectionView x:Name="ChatList"
+                Margin="0,10,0,0"
+                ItemsSource="{Binding Chats}"
+                SelectionMode="Single"
+                SelectionChanged="ChatList_SelectionChanged">
+            <CollectionView.ItemTemplate>
+                <DataTemplate>
+                    <Grid Padding="10" ColumnDefinitions="60, * , Auto">
+
+                        <!-- Имя + последнее сообщение -->
+                        <VerticalStackLayout Grid.Column="1"
+                                     Spacing="2"
+                                     Padding="10,0">
+
+                            <Label Text="{Binding ChatTitle}"
+                           TextColor="White"
+                           FontSize="16"
+                           FontAttributes="Bold"/>
+
+                            <Label Text="{Binding LastMessage}"
+                           TextColor="#90A4AE"
+                           FontSize="13"
+                           LineBreakMode="TailTruncation"/>
+                        </VerticalStackLayout>
+
+                        <!-- Время -->
+                        <VerticalStackLayout Grid.Column="2"
+                                     HorizontalOptions="End"
+                                     VerticalOptions="Center"
+                                     Spacing="6">
+
+                            <Label Text="{Binding Time}"
+                           TextColor="#90A4AE"
+                           FontSize="12"
+                           HorizontalTextAlignment="End"/>
+                        </VerticalStackLayout>
+
+                    </Grid>
+                </DataTemplate>
+            </CollectionView.ItemTemplate>
+        </CollectionView>
+
+
+    </VerticalStackLayout>
+
+</ContentPage>

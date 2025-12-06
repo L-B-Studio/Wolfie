@@ -42,7 +42,7 @@ namespace Wolfie.Services
                         ChatTitle = ChatTitle,
                         LastMessage = LastMessage
                     });
-                    _db.ListAddOrUpdateInDb(ChatId, ChatTitle, LastMessage);
+                    await _db.ListAddOrUpdateInDb(ChatId, ChatTitle, LastMessage);
                     break;
 
 
@@ -69,7 +69,7 @@ namespace Wolfie.Services
                         Message = Message,
                         MessageTime = MessageTime
                     });
-                    _db.MessageAddOrUpdateInDb(chatId, MessageId , Sender , Getter , Message  , MessageTime);
+                    await _db.MessageAddOrUpdateInDb(chatId, MessageId , Sender , Getter , Message  , MessageTime);
 
                     break;
             }

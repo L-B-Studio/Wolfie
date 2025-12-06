@@ -9,6 +9,7 @@ namespace Wolfie.Models
         public string? ChatId { get; set; } = string.Empty;
         public string? ChatTitle { get; set; } = string.Empty;
         public string? LastMessage { get; set; } = string.Empty;
+        public string? Time { get; set; } = string.Empty;
         //public string Avatar { get; set; } = string.Empty;
     }
 }

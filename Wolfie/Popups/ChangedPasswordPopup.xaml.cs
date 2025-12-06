@@ -42,9 +42,9 @@ public partial class ChangedPasswordPopup : Popup
                         packet.body.TryGetValue("error", out string error);
                         error = error?.Trim().ToLower();
                         if (error == "changedpassword_failed;pass_is_repeated")
-                            await ShowAlert("Error", "Password is repeated");
+                            await ShowAlert("Error", $"{msg}\nPassword is repeated");
                         else if (error == "changedpassword_failed;unaccess_token")
-                            await ShowAlert("Error", "U're bitch  ЪУЪ");
+                            await ShowAlert("Error", $"{msg}\nU're bitch  ЪУЪ");
                         return;
 
                     case "success":
@@ -52,7 +52,7 @@ public partial class ChangedPasswordPopup : Popup
                         success = success?.Trim().ToLower();
                         if (success == "changedpassword_success;pass_changed")
                         {
-                            await ShowAlert("SUCCESS", "Try to login with new password now");
+                            await ShowAlert("SUCCESS", $"{msg}\nTry to login with new password now");
                             await Task.Delay(100); // чтобы UI успел обновиться
                             await CloseAsync();
                         }
