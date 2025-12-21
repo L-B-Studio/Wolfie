@@ -30,5 +30,12 @@
 	<true/>
 	<key>UIRequiresFullScreen</key>
 	<true/>
+	<key>NSLocationWhenInUseUsageDescription</key>
+	<true/>
+	<string>We need access to your location to provide relevant services.</string>
+	<key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
+	<true/>
+	<string>We need access to your location to provide relevant services.</string>
+
 </dict>
 </plist>

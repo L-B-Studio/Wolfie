@@ -9,7 +9,6 @@ namespace Wolfie.Services
 {
     public class SslClientService : IDisposable
     {
-        private readonly RateLimiter _rateLimiter = new RateLimiter(3, TimeSpan.FromMinutes(1));
 
         private TcpClient? _client;
         private SslStream? _sslStream;
@@ -73,6 +72,11 @@ namespace Wolfie.Services
 
                     _writer = new StreamWriter(_sslStream, Encoding.UTF8) { AutoFlush = true };
                     _reader = new StreamReader(_sslStream, Encoding.UTF8);
+
+                    if( _writer == null || _reader == null )
+                    {
+                        throw new InvalidOperationException("SSL stream not initialized");
+                    }
 
                     Connected?.Invoke();
                     _ = Task.Run(() => ListenAsync(_cts.Token));
@@ -170,37 +174,14 @@ namespace Wolfie.Services
             await EnsureConnectedAsync();
         }
 
-        //public async Task SendAsync(string message)
-        //{
-        //    await EnsureConnectedAsync();
-        //
-        //    if (_writer == null)
-        //        throw new InvalidOperationException("Not connected to server");
-        //
-        //    await _sendLock.WaitAsync();
-        //    try
-        //    {
-        //        await _writer.WriteLineAsync(message);
-        //    }
-        //    finally
-        //    {
-        //        _sendLock.Release();
-        //    }
-        //}
-
         public async Task SendJsonAsync(string command, Dictionary<string,string> data)
         {
 
-            // rate limit
-            if (!_rateLimiter.TryAcquire())
-            {
-                Console.WriteLine("⚠️ Rate limit reached. Request blocked.");
-                return; // Можно кинуть исключение, если нужно
-            }
-
             await EnsureConnectedAsync();
+            if (_writer == null)
+                throw new InvalidOperationException("Not connected to server");
 
-            var packet = new JsonPackage
+            var packet = new ServerJsonPackage
             {
                 header = command,
                 body = data
@@ -208,7 +189,6 @@ namespace Wolfie.Services
 
             string json = JsonSerializer.Serialize(packet);
 
-            // Отправляем JSON + перенос строки
             await _writer.WriteLineAsync(json);
         }
 

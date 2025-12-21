@@ -3,8 +3,6 @@ using Microsoft.Maui.Platform;
 using Wolfie.Helpers;
 using Wolfie.Pages;
 using Wolfie.Services;
-using Wolfie.Storage;
-using Wolfie.ViewModels; // важно
 
 namespace Wolfie
 {

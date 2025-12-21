@@ -1,5 +1,6 @@
 ﻿using CommunityToolkit.Maui.Extensions;
 using System.Text.Json;
+using Wolfie.Auth;
 using Wolfie.Helpers;
 using Wolfie.Models;
 using Wolfie.Popups;
@@ -10,12 +11,20 @@ namespace Wolfie.Pages;
 public partial class RegistrationPage : ContentPage
 {
     private readonly SslClientService _tcpService;
+    private readonly AuthState _authstate;
+    private readonly string _deviceInfo;
     public RegistrationPage()
     {
         InitializeComponent();
-        NavigationPage.SetHasNavigationBar(this, false);
-        NavigationPage.SetBackButtonTitle(this, null);
-        _tcpService = SslClientHelper.GetService<SslClientService>();
+        _tcpService = ServiceClientHelper.GetService<SslClientService>();
+        _authstate = ServiceClientHelper.GetService<AuthState>() ;
+        _deviceInfo = DeviceInfoHelper.GetAllDeviceInfo();
+
+    }
+
+    protected override void OnAppearing()
+    {
+        base.OnAppearing();
         _tcpService.MessageReceived += OnMessageReceived;
         ApplyTheme();
     }
@@ -23,7 +32,6 @@ public partial class RegistrationPage : ContentPage
     protected override void OnDisappearing()
     {
         base.OnDisappearing();
-        // ✅ Отписываемся во избежание утечки памяти/двойных событий
         _tcpService.MessageReceived -= OnMessageReceived;
     }
 
@@ -34,8 +42,6 @@ public partial class RegistrationPage : ContentPage
         string createPass = PasswordCreateEntry.Text;
         string againPass = PasswordAgainEntry.Text;
         DateTime birthday = BirthdayDatePicker.Date ?? DateTime.Now;
-
-        //string dataMessage = $"registration_data;{username};{email};{createPass};{birthday:yyyy-MM-dd}";
 
         if (string.IsNullOrWhiteSpace(username) ||
             string.IsNullOrWhiteSpace(email) ||
@@ -88,7 +94,8 @@ public partial class RegistrationPage : ContentPage
                 ["username"]= username,
                 ["email"] = email,
                 ["password"] = createPass,
-                ["birthday"] = birthday.ToString()
+                ["birthday"] = birthday.ToString("MM-dd-yyyy"),
+                ["device_info"] = _deviceInfo
             });
             await Task.Delay(500);
         }
@@ -115,7 +122,7 @@ public partial class RegistrationPage : ContentPage
                     return;
                 }
 
-                var packet = JsonSerializer.Deserialize<JsonPackage>(msg);
+                var packet = JsonSerializer.Deserialize<ServerJsonPackage>(msg);
                 if (packet == null || string.IsNullOrWhiteSpace(packet.header)) return;
                 if (packet.body == null) packet.body = new Dictionary<string, string>();
 
@@ -133,13 +140,38 @@ public partial class RegistrationPage : ContentPage
                         }
                         return;
                     case "success":
+                        try
+                        {
+                            packet.body.TryGetValue("token_refresh", out string refresh_token);
+                            refresh_token = refresh_token?.Trim();
+                            await SecureStorage.SetAsync("refresh_token", refresh_token);
+                            await DisplayAlertAsync("refresh reg token", refresh_token, "ok");
+                        }
+                        catch (Exception ex)
+                        {
+                            await DisplayAlertAsync("Error in refresh token", ex.Message, "ok");
+                        }
+                        try
+                        {
+                            packet.body.TryGetValue("token_access", out string access_token);
+                            access_token = access_token?.Trim();
+                            _authstate.AccessToken = access_token;
+                            await DisplayAlertAsync("access reg token", access_token, "ok");
+                        }
+                        catch (Exception ex)
+                        {
+                            await DisplayAlertAsync("Error in access token", ex.Message, "ok");
+                        }
                         packet.body.TryGetValue("success", out string sucess);
                         sucess = sucess?.Trim().ToLower();
                         if (sucess == $"registration_success;ok")
                         {
-                            var popup = new EmailCodeVerifPopup(email , true);
-                            await this.ShowPopupAsync(popup);
+                            //var popup = new EmailCodeVerifPopup(email , true);
+                            //await this.ShowPopupAsync(popup);
+                            await DisplayAlertAsync("SUCCESS", $"{msg}\nYou have registered!", "Enter");
+                            await Shell.Current.GoToAsync(nameof(ChatListPage));
                             await Task.Delay(100);
+                            break;
                         }
                         break;
                     default:
@@ -179,7 +211,8 @@ public partial class RegistrationPage : ContentPage
 
     async void OnBackClicked(object sender, EventArgs e)
     {
-        await Navigation.PushAsync(new LoginPage());
+            await Shell.Current.GoToAsync("..");
+
     }
 
     private void ApplyTheme()
@@ -270,10 +303,22 @@ public partial class RegistrationPage : ContentPage
         }
     }
 
-    private void OnThemeClicked(object sender, EventArgs e)
+    private async void OnThemeClicked(object sender, EventArgs e)
     {
-        ThemeService.ToggleTheme();
-        ApplyTheme();
+        var currentPage = Shell.Current.CurrentPage;
+
+        if (currentPage != null)
+        {
+            // 1. Уходим в прозрачность
+            await currentPage.FadeToAsync(0, 250, Easing.Linear);
+
+            // 2. Меняем тему
+            ThemeService.ToggleTheme();
+            ApplyTheme();
+
+            // 3. Возвращаем видимость
+            await currentPage.FadeToAsync(1, 250, Easing.Linear);
+        }
     }
 
     private async void OnTermsTapped(object sender, EventArgs e)

@@ -1,13 +1,17 @@
 <ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
-             xmlns:mct="clr-namespace:CommunityToolkit.Maui.Behaviors;assembly=CommunityToolkit.Maui"
+             xmlns:mct="http://schemas.microsoft.com/dotnet/2022/maui/toolkit"
              x:Class="Wolfie.Pages.LoginPage"
              x:Name="MainLayout">
 
+    <Shell.BackButtonBehavior>
+        <BackButtonBehavior IsVisible="False" IsEnabled="False" />
+    </Shell.BackButtonBehavior>
+    
     <Page.Behaviors>
         <mct:StatusBarBehavior StatusBarColor="Transparent" />
     </Page.Behaviors>
-
+    <Grid x:Name="Root">
     <ScrollView>
         <VerticalStackLayout Spacing="20" Padding="20" HorizontalOptions="Center">
 
@@ -24,15 +28,36 @@
                     <Label x:Name="TitleLabel" Text="Wolfie" FontSize="26" FontFamily="MetalMania" VerticalOptions="Center"/>
                 </StackLayout>
 
-                <ImageButton x:Name="ThemeButton"
+
+                    <ImageButton x:Name="ThemeButton"
                          Grid.Column="2"
                          WidthRequest="36"
                          HeightRequest="36"
                          BackgroundColor="Transparent"
                          Clicked="OnThemeClicked"
                          HorizontalOptions="End"
-                         VerticalOptions="Center"/>
-            </Grid>
+                         VerticalOptions="Center">
+                        <ImageButton.Triggers>
+                            <Trigger TargetType="ImageButton" Property="IsPressed" Value="True">
+                                <Setter Property="Opacity" Value="1.0" />
+                            </Trigger>
+                        </ImageButton.Triggers>
+                    </ImageButton>
+                    <VisualStateManager.VisualStateGroups>
+                        <VisualStateGroup Name="CommonStates">
+                            <VisualState Name="Normal">
+                                <VisualState.Setters>
+                                    <Setter Property="Opacity" Value="1" />
+                                </VisualState.Setters>
+                            </VisualState>
+                            <VisualState Name="Pressed">
+                                <VisualState.Setters>
+                                    <Setter Property="Opacity" Value="1" />
+                                </VisualState.Setters>
+                            </VisualState>
+                        </VisualStateGroup>
+                    </VisualStateManager.VisualStateGroups>
+                </Grid>
 
             <!-- Login header -->
             <Label Text="Enter your account"
@@ -77,11 +102,13 @@
                 />
 
             <!-- Or -->
-            <Label Text="OR"
+            <Label 
+                x:Name="OrLabel"
+                Text="OR"
                 FontSize="14"
                 HorizontalOptions="Center"
                 Margin="0,5"
-                   x:Name="OrLable"/>
+                  />
 
             <!-- Register -->
             <Button x:Name="RegistrationButton"
@@ -123,4 +150,11 @@
 
         </VerticalStackLayout>
     </ScrollView>
+    <!--    <Ellipse x:Name="RevealCircle"
+             IsVisible="False"
+             Scale="0"
+             InputTransparent="True"
+             HorizontalOptions="Start"
+             VerticalOptions="Start"/> -->
+    </Grid>
 </ContentPage>

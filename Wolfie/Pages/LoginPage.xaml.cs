@@ -1,39 +1,41 @@
-using CommunityToolkit.Maui.Extensions;
+Ôªøusing CommunityToolkit.Maui.Extensions;
 using System.Net.Mail;
 using System.Text.Json;
+using Wolfie.Auth;
+using Wolfie.DebugPages;
 using Wolfie.Helpers;
 using Wolfie.Models;
 using Wolfie.Popups;
 using Wolfie.Services;
-using Wolfie.Storage;
-using Wolfie.ViewModels;
 
 namespace Wolfie.Pages;
 
 public partial class LoginPage : ContentPage
 {
     private readonly SslClientService _tcpService;
+    private readonly string _deviceInfo; 
+    //private readonly GetCurrentLocationService _location = new GetCurrentLocationService();
+    private readonly AuthState _authstate;
 
     public LoginPage()
     {
         InitializeComponent();
-        NavigationPage.SetHasNavigationBar(this, false);
-        NavigationPage.SetBackButtonTitle(this, null);
-        _tcpService = SslClientHelper.GetService<SslClientService>();
-        _tcpService.MessageReceived += OnMessageReceived;
+        _tcpService = ServiceClientHelper.GetService<SslClientService>();
+        _authstate = ServiceClientHelper.GetService<AuthState>();
+        _deviceInfo = DeviceInfoHelper.GetAllDeviceInfo();
         ApplyTheme();
     }
 
     protected override void OnAppearing()
     {
         base.OnAppearing();
+        _tcpService.MessageReceived += OnMessageReceived;
         ApplyTheme();
     }
 
     protected override void OnDisappearing()
     {
         base.OnDisappearing();
-        // ? ŒÚÔËÒ˚‚‡ÂÏÒˇ ‚Ó ËÁ·ÂÊ‡ÌËÂ ÛÚÂ˜ÍË Ô‡ÏˇÚË/‰‚ÓÈÌ˚ı ÒÓ·˚ÚËÈ
         _tcpService.MessageReceived -= OnMessageReceived;
     }
 
@@ -49,12 +51,12 @@ public partial class LoginPage : ContentPage
                 }
                 catch (Exception ex)
                 {
-                    await DisplayAlertAsync("Error", ex.Message, "Ok");
+                    await DisplayAlertAsync("Error in get data from server", ex.Message, "Ok");
                     return;
                 }
 
 
-                var packet = JsonSerializer.Deserialize<JsonPackage>(msg);
+                var packet = JsonSerializer.Deserialize<ServerJsonPackage>(msg);
                 if (packet == null || string.IsNullOrWhiteSpace(packet.header)) return;
                 if (packet.body == null) packet.body = new Dictionary<string, string>();
 
@@ -65,22 +67,52 @@ public partial class LoginPage : ContentPage
                         packet.body.TryGetValue("error", out string error);
                         error = error?.Trim().ToLower();
                         if (error == "login_failed;invalid_credentials")
-                            await DisplayAlertAsync("Œ¯Ë·Í‡", $"{msg}\nœÓ˜Ú‡ ËÎË Ô‡ÓÎ¸ ÌÂÔ‡‚ËÎ¸Ì˚Â", "ŒÍ");
+                            await DisplayAlertAsync("–û—à–∏–±–∫–∞", $"{msg}\n–ü–æ—á—Ç–∞ –∏–ª–∏ –ø–∞—Ä–æ–ª—å –Ω–µ–ø—Ä–∞–≤–∏–ª—å–Ω—ã–µ", "–û–∫");
                         return;
 
                     case "success":
-                        packet.body.TryGetValue("success", out string success);
-                        success = success?.Trim().ToLower();
-                        //await DisplayAlertAsync("WRONG" , success , "ok");
-                        if (success == "login_success;ok")
+                        try
                         {
-                            await DisplayAlertAsync("SUCCESS", $"{msg}\nYou have logged in!", "Enter");
-                            var chatVm = MauiProgram.CreateMauiApp().Services.GetService<ChatPageViewModel>();
-                            //Application.Current.MainPage = new ChatListPage(chatVm);
-                            //AppState.SaveLastPage("ChatList");
-                            await Navigation.PushAsync(new ChatListPage(chatVm));
-                            await Task.Delay(100);
+                            packet.body.TryGetValue("token_refresh", out string refresh_token);
+                            refresh_token = refresh_token?.Trim();
+                            await SecureStorage.SetAsync("refresh_token", refresh_token);
+                            await DisplayAlertAsync("refresh login token", refresh_token, "ok");
                         }
+                        catch (Exception ex)
+                        {
+                            await DisplayAlertAsync("Error in refresh token", ex.Message, "ok");
+                        }
+                        try
+                        {
+                            packet.body.TryGetValue("token_access", out string access_token);
+                            access_token = access_token?.Trim();
+                            _authstate.AccessToken = access_token;
+                            await DisplayAlertAsync("access login token", access_token, "ok");
+                        }
+                        catch (Exception ex)
+                        {
+                            await DisplayAlertAsync("Error in access token", ex.Message, "ok");
+                        }
+                        try
+                        {
+                            packet.body.TryGetValue("status", out string status);
+                            status = status?.Trim().ToLower();
+                           if (status == "logger" || status == "developer")
+                            {
+                                var device = DeviceInfo.Idiom;
+                                await DisplayAlertAsync("Device Info", device.ToString(), "ok");
+                                await DisplayAlertAsync("Dev Login", $"{msg}\nWelcome to logger status", "enter");
+                                await Shell.Current.GoToAsync(nameof(LoggerDebugPage));
+                                break;
+                            }
+                        }
+                        catch (Exception ex)
+                        {
+                            await DisplayAlertAsync("Error in Logger", ex.Message, "ok");
+                        }
+                        await DisplayAlertAsync("SUCCESS", $"{msg}\nYou have logged in!", "Enter");
+                        await Shell.Current.GoToAsync(nameof(ChatListPage));
+                        await Task.Delay(100);
                         break;
                 }
 
@@ -97,43 +129,49 @@ public partial class LoginPage : ContentPage
 
     private async void LoginButtonClicked(object sender, EventArgs e)
     {
-        string email = EmailEntry.Text?.Trim();
-        string pass = PasswordEntry.Text;
-
-        if (string.IsNullOrWhiteSpace(pass) || string.IsNullOrWhiteSpace(email))
-        {
-            await DisplayAlertAsync("Error", "All rows must be filled", "ok");
-            return;
-        }
-
-        if (!IsValidEmail(email))
-        {
-            await DisplayAlertAsync("Error", "Write real email", "ok");
-            return;
-        }
-
-        if (!AgreeCheckBox.IsChecked)
-        {
-            await DisplayAlertAsync("Error", "Agree with Terms and Privacy rules", "ÓÍ");
-            return;
-        }
         try
         {
-            await _tcpService.SendJsonAsync("login_data", new()
+            string email = EmailEntry.Text?.Trim();
+            string pass = PasswordEntry.Text;
+           
+            if (string.IsNullOrWhiteSpace(pass) || string.IsNullOrWhiteSpace(email))
             {
-                //["device model"] = DeviceInfo.Model,
-                //["device name"] = DeviceInfo.Name
-                ["email"] = email,
-                ["password"] = pass
-            });
-            await Task.Delay(500);
+                await DisplayAlertAsync("Error in pass", "All rows must be filled", "ok");
+                return;
+            }
 
+            if (!IsValidEmail(email))
+            {
+                await DisplayAlertAsync("Error in email", "Write real email", "ok");
+                return;
+            }
+
+            if (!AgreeCheckBox.IsChecked)
+            {
+                await DisplayAlertAsync("Error in rules", "Agree with Terms and Privacy rules", "–æ–∫");
+                return;
+            }
+            try
+            {
+
+                await _tcpService.SendJsonAsync("login_data", new()
+                {
+                    ["email"] = email,
+                    ["password"] = pass,
+                    ["device_info"] = _deviceInfo
+                });
+                await Task.Delay(500);
+
+            }
+            catch (Exception er)
+            {
+                await DisplayAlertAsync("Exception in send", er.Message, "–û–ö");
+            }
         }
-        catch (Exception er)
+        catch (Exception ex)
         {
-            await DisplayAlertAsync("Error", er.Message, "Œ ");
+            await DisplayAlertAsync("Exception in get data", ex.Message, "ok");
         }
-
     }
 
     public bool IsValidEmail(string email)
@@ -149,20 +187,32 @@ public partial class LoginPage : ContentPage
         }
     }
 
-    private void OnThemeClicked(object sender, EventArgs e)
+    private async void OnThemeClicked(object sender, EventArgs e)
     {
-        ThemeService.ToggleTheme();
-        ApplyTheme();
+        var currentPage = Shell.Current.CurrentPage;
+
+        if (currentPage != null)
+        {
+            // 1. –£—Ö–æ–¥–∏–º –≤ –ø—Ä–æ–∑—Ä–∞—á–Ω–æ—Å—Ç—å
+            await currentPage.FadeToAsync(0, 250, Easing.Linear);
+
+            // 2. –ú–µ–Ω—è–µ–º —Ç–µ–º—É
+            ThemeService.ToggleTheme();
+            ApplyTheme();
+
+            // 3. –í–æ–∑–≤—Ä–∞—â–∞–µ–º –≤–∏–¥–∏–º–æ—Å—Ç—å
+            await currentPage.FadeToAsync(1, 250, Easing.Linear);
+        }
     }
 
     private void ApplyTheme()
     {
         if (ThemeService.IsDarkTheme)
-        {  
+        {
             //photos
             ThemeButton.Source = "sun.png";
             Logo.Source = "light_logo.png";
-            
+
             //page's background 
             MainLayout.BackgroundColor = Color.FromArgb("#121821");
 
@@ -170,14 +220,14 @@ public partial class LoginPage : ContentPage
             EnterLabel.TextColor = Color.FromArgb("#E6E6E6");
             TitleLabel.TextColor = Color.FromArgb("#E6E6E6");
             AgreeText.TextColor = Color.FromArgb("#D8D8D8");
-            OrLable.TextColor = Color.FromArgb("#7E8A97");
+            OrLabel.TextColor = Color.FromArgb("#7E8A97");
 
             //Buttons
             LoginButton.BackgroundColor = Color.FromArgb("#2980FF");
             LoginButton.TextColor = Colors.White;
             RegistrationButton.BackgroundColor = Color.FromArgb("#3C4E64");
             RegistrationButton.TextColor = Colors.White;
-            
+
             //Entries
             EmailEntry.BackgroundColor = Color.FromArgb("#1D2633");
             EmailEntry.PlaceholderColor = Color.FromArgb("#8E9BAA");
@@ -197,7 +247,7 @@ public partial class LoginPage : ContentPage
             //photos
             ThemeButton.Source = "moon.png";
             Logo.Source = "logo.png";
-            
+
             //page's background
             MainLayout.BackgroundColor = Color.FromArgb("#F4F7FA");
 
@@ -205,14 +255,14 @@ public partial class LoginPage : ContentPage
             EnterLabel.TextColor = Color.FromArgb("#1A1A1A");
             TitleLabel.TextColor = Color.FromArgb("#1A1A1A");
             AgreeText.TextColor = Color.FromArgb("#1A1A1A");
-            OrLable.TextColor = Color.FromArgb("#1A1A1A");
+            OrLabel.TextColor = Color.FromArgb("#1A1A1A");
 
             //Buttons
             LoginButton.BackgroundColor = Color.FromArgb("#2979FF");
             LoginButton.TextColor = Colors.White;
             RegistrationButton.BackgroundColor = Color.FromArgb("#2979FF");
             RegistrationButton.TextColor = Colors.White;
-            
+
             //Entries
             EmailEntry.BackgroundColor = Color.FromArgb("#E8ECF1");
             EmailEntry.PlaceholderColor = Color.FromArgb("#4A5058");

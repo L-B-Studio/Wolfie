@@ -1,8 +1,11 @@
 ﻿using CommunityToolkit.Maui;
 using Microsoft.Extensions.Logging;
+using Wolfie.Auth;
 using Wolfie.Helpers;
+using Wolfie.Pages;
 using Wolfie.Services;
 using Wolfie.ViewModels;
+using static Wolfie.ViewModels.ChatItemViewModel;
 
 namespace Wolfie
 {
@@ -28,22 +31,14 @@ namespace Wolfie
 #endif
             builder.Services.AddSingleton<SslClientService>();
             builder.Services.AddSingleton<ChatStorageService>();
-            builder.Services.AddTransient<ChatPageViewModel>();
-            //_ = StartConnection();
+            builder.Services.AddSingleton<LocalDbService>();
+            builder.Services.AddSingleton<AuthState>();
+
+            builder.Services.AddTransient<ChatItemViewModel>();
+            builder.Services.AddTransient<ChatListPage>();
+            builder.Services.AddSingleton<AuthState>();
 
             return builder.Build();
         }
-
-        //private static async Task StartConnection()
-        //{
-        //    try
-        //    {
-        //        await _client.EnsureConnectedAsync();
-        //    }
-        //    catch (Exception)
-        //    {
-        //        _ = StartConnection();
-        //    }
-        //}
     }
 }

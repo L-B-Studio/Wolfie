@@ -5,6 +5,10 @@
              x:Class="Wolfie.Pages.RegistrationPage"
              x:Name="MainLayout">
 
+    <Shell.BackButtonBehavior>
+        <BackButtonBehavior IsVisible="False" IsEnabled="False" />
+    </Shell.BackButtonBehavior>
+
     <Page.Behaviors>
         <mct:StatusBarBehavior StatusBarColor="Transparent"/>
     </Page.Behaviors>

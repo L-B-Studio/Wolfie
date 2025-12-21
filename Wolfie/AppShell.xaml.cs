@@ -1,4 +1,5 @@
-﻿using Wolfie.Pages;
+﻿using Wolfie.DebugPages;
+using Wolfie.Pages;
 using Wolfie.Popups;
 
 namespace Wolfie
@@ -14,6 +15,8 @@ namespace Wolfie
             Routing.RegisterRoute(nameof(LoginPage), typeof(LoginPage));
 
             Routing.RegisterRoute(nameof(ChatListPage), typeof(ChatListPage));
+
+            Routing.RegisterRoute(nameof(LoggerDebugPage), typeof(LoggerDebugPage));
 
             //Routing.RegisterRoute(nameof(MessagePage), typeof(MessagePage));
         }

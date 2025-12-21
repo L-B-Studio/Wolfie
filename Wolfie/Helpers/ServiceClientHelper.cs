@@ -4,7 +4,7 @@ using System.Text;
 
 namespace Wolfie.Helpers
 {
-    public class MessangerServicesHelper
+    public class ServiceClientHelper
     {
         public static T GetService<T>() =>
        Current.GetService<T>() ?? throw new InvalidOperationException($"Сервис {typeof(T)} не найден.");
@@ -13,6 +13,4 @@ namespace Wolfie.Helpers
             Application.Current?.Handler?.MauiContext?.Services
             ?? throw new InvalidOperationException("Сервисы MAUI недоступны (приложение ещё не инициализировано).");
     }
-
 }
-

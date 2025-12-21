@@ -5,7 +5,7 @@ using System.Text.Json;
 
 namespace Wolfie.Models
 {
-    public class JsonPackage
+    public class ServerJsonPackage
     {
         public string header { get; set; }
         public Dictionary<string , string> body { get; set; }

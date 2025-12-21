@@ -1,107 +1,115 @@
-﻿
-using Microsoft.EntityFrameworkCore.Metadata.Internal;
-using Microsoft.EntityFrameworkCore.Storage;
-using System;
-using System.Collections.Generic;
-using System.Collections.ObjectModel;
-using System.Net.Security;
-using System.Text;
-using System.Text.Json;
+﻿using System.Text.Json;
 using Wolfie.Helpers;
 using Wolfie.Models;
+using Wolfie.Services;
 
-namespace Wolfie.Services
+public class ChatStorageService
 {
-    public class ChatStorageService
+    private readonly LocalDbService _db;
+    private readonly SslClientService _client;
+
+    public event Action<ChatItemModel>? ChatAdded;
+    public event Action<ChatItemModel>? ChatUpdated;
+
+    public ChatStorageService()
     {
-        public ObservableCollection<ChatItem> Chats { get; } = new();
-        public Dictionary<string, ObservableCollection<MessageItem>> Messages { get; } = new();
-        private LocalDbService _db = new LocalDbService();
+        _db = ServiceClientHelper.GetService<LocalDbService>()!;
+        _client = ServiceClientHelper.GetService<SslClientService>()!;
 
-        private readonly SslClientService _client;
-        public ChatStorageService()
+        _client.MessageReceived += OnServerMessage;
+        _ = CreateSavedMessagesChatAsync();
+    }
+
+    private async Task CreateSavedMessagesChatAsync()
+    {
+        const string savedChatId = "saved_messages"; // уникальный ID
+        var existing = await _db.GetChatAsync(savedChatId);
+        if (existing != null)
+            return;
+
+        var chat = new ChatItemModel
         {
-            _client = SslClientHelper.GetService<SslClientService>();
-            _client.MessageReceived += OnMessageReceivedAsync;
-        }
+            ChatId = savedChatId,
+            ChatTitle = "Saved Messages",
+            ChatAvatarName = "default_user_icon.png", // локальный ресурс аватара
+            LastMessage = string.Empty,
+            LastActivityDate = DateTime.UtcNow,
+            IsUnreaded = false,
+            UnreadedMessageCount = 0
+        };
 
-        public async void OnMessageReceivedAsync(string msg)
+        await _db.SaveChatAsync(chat);
+        ChatAdded?.Invoke(chat);
+    }
+
+    public async Task<List<ChatItemModel>> GetAllChatsAsync()
+    {
+        return await _db.GetAllChatsAsync();
+    }
+
+
+    // ====== SERVER EVENTS ======
+
+    private void OnServerMessage(string raw)
+    {
+        var pkg = JsonSerializer.Deserialize<ServerJsonPackage>(raw);
+        if (pkg == null) return;
+
+        switch (pkg.header)
         {
-            var packet = JsonSerializer.Deserialize<JsonPackage>(msg);
+            case "chat_created":
+                HandleChatCreated(pkg);
+                break;
 
-            switch (packet.header.ToLower().Trim())
-            {
-                case "chatitem_data":
-                    string ChatId = packet.body["ChatId"].ToLower().Trim().ToString();
-                    string ChatTitle = packet.body["Username"].ToLower().Trim().ToString();
-                    string LastMessage = packet.body["LastMessage"].ToLower().Trim().ToString();
-                    
-                    Chats.Add(new ChatItem
-                    {
-                        ChatId = ChatId,
-                        ChatTitle = ChatTitle,
-                        LastMessage = LastMessage
-                    });
-                    await _db.ListAddOrUpdateInDb(ChatId, ChatTitle, LastMessage);
-                    break;
+            case "chat_updated":
+                HandleChatUpdated(pkg);
+                break;
 
-
-                case "messageitem_data":
-                    var chatId = packet.body["ChatId"].ToLower().Trim();
-
-                    // Проверяем, есть ли коллекция сообщений для данного ChatId
-                    if (!Messages.ContainsKey(chatId))
-                    {
-                        Messages[chatId] = new ObservableCollection<MessageItem>();
-                    }
-                    string ? MessageId = packet.body["MessageId"].ToLower().Trim().ToString();
-                    string? Sender = packet.body["Sender"].ToLower().Trim().ToString();
-                    string ? Getter = packet.body["Getter"].ToLower().Trim().ToString();
-                    string ? Message = packet.body["Message"].ToLower().Trim().ToString();
-                    DateTime? MessageTime = DateTime.Parse(packet.body["MessageTime"]);
-
-                    // Добавляем сообщение
-                    Messages[chatId].Add(new MessageItem
-                    {
-                        MessageId = MessageId,
-                        Sender = Sender,
-                        Getter = Getter,
-                        Message = Message,
-                        MessageTime = MessageTime
-                    });
-                    await _db.MessageAddOrUpdateInDb(chatId, MessageId , Sender , Getter , Message  , MessageTime);
-
-                    break;
-            }
+            case "new_message":
+                HandleNewMessage(pkg);
+                break;
         }
+    }
 
-        public ObservableCollection<MessageItem> GetMessages(string chatId)
+    private async void HandleChatCreated(ServerJsonPackage pkg)
+    {
+        var chat = ParseChat(pkg);
+        await _db.SaveChatAsync(chat);
+        ChatAdded?.Invoke(chat);
+    }
+
+    private async void HandleChatUpdated(ServerJsonPackage pkg)
+    {
+        var chat = ParseChat(pkg);
+        await _db.SaveChatAsync(chat);
+        ChatUpdated?.Invoke(chat);
+    }
+
+    private async void HandleNewMessage(ServerJsonPackage pkg)
+    {
+        var chatId = pkg.body["ChatId"];
+        var text = pkg.body["Message"];
+
+        var chat = await _db.GetChatAsync(chatId);
+        if (chat == null) return;
+
+        chat.LastMessage = text;
+        chat.LastActivityDate = DateTime.UtcNow;
+        chat.IsUnreaded = true;
+        chat.UnreadedMessageCount++;
+
+        await _db.SaveChatAsync(chat);
+        ChatUpdated?.Invoke(chat);
+    }
+
+    private ChatItemModel ParseChat(ServerJsonPackage pkg)
+    {
+        return new ChatItemModel
         {
-            if (!Messages.ContainsKey(chatId))
-                Messages[chatId] = new();
-
-
-            return Messages[chatId];
-        }
-
-
-        public void AddMessage(string chatId , string messageId, string sender, string getter , string text)
-        {
-            var msg = new MessageItem
-            {
-                MessageId = messageId,
-                Getter = getter,
-                Sender = sender,
-                Message = text,
-                MessageTime = DateTime.Now
-            };
-
-
-            Messages[chatId].Add(msg);
-
-
-            var chat = Chats.First(x => x.ChatId == chatId);
-            chat.LastMessage = text;
-        }
+            ChatId = pkg.body["ChatId"],
+            ChatTitle = pkg.body["Title"],
+            LastMessage = pkg.body.GetValueOrDefault("LastMessage", ""),
+            LastActivityDate = DateTime.UtcNow
+        };
     }
 }

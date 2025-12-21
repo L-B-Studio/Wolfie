@@ -1,5 +1,5 @@
+using Microsoft.Maui.Controls;
 using Wolfie.Helpers;
-using Wolfie.Models;
 using Wolfie.Services;
 using Wolfie.ViewModels;
 
@@ -7,29 +7,29 @@ namespace Wolfie.Pages;
 
 public partial class ChatListPage : ContentPage
 {
-    private readonly SslClientService _client;
-    public ChatListPage(ChatPageViewModel viewModel)
+    private readonly ChatListViewModel _viewModel;
+
+    public ChatListPage()
     {
         InitializeComponent();
         NavigationPage.SetHasNavigationBar(this, false);
-        NavigationPage.SetBackButtonTitle(this, null);
-        _client = SslClientHelper.GetService<SslClientService>();
-        BindingContext = viewModel;
+
+        _viewModel = new ChatListViewModel();
+        BindingContext = _viewModel;
     }
 
     private async void ChatList_SelectionChanged(object sender, SelectionChangedEventArgs e)
     {
-        await DisplayAlertAsync("TAPPED", "U TAPPED TO CHAT", "ok");
-        //var current = e.CurrentSelection.FirstOrDefault() as ChatItem;
-        //if (current == null)
-        //    return;
+        //ChatSelected.Setter.BackgroudColor = Color.FromArgb("#4c5e75");
+        if (e.CurrentSelection.Count == 0)
+            return;
 
-        // Снимаем выделение, чтобы можно было нажимать повторно
-        //((CollectionView)sender).SelectedItem = null;
+        var selectedChat = e.CurrentSelection[0] as ChatItemViewModel;
+        if (selectedChat != null)
+        {
+            await DisplayAlertAsync("Чат выбран", $"Вы выбрали: {selectedChat.ChatTitle}", "OK");
+        }
 
-        // Навигация в ChatPage, передавая ID чата
-        //await Navigation.PushAsync(new ChatPage(current.ChatId, current.ChatTitle));
+        ((CollectionView)sender).SelectedItem = null;
     }
-
-
 }
