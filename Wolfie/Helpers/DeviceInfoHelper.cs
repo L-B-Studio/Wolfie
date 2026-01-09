@@ -4,9 +4,10 @@ using System.Text;
 
 namespace Wolfie.Helpers
 {
+    // Special class to get device information
     public class DeviceInfoHelper
     {
-        public static string GetAllDeviceInfo()
+        public  string GetAllDeviceInfo()
         {
             var sb = new StringBuilder();
 
@@ -22,6 +23,16 @@ namespace Wolfie.Helpers
             sb.AppendLine($"Device Type: {DeviceInfo.DeviceType}");
 
             return sb.ToString();
+        }
+
+        public  string GetDeviceManufacture()
+        {
+            return DeviceInfo.Manufacturer.ToString();
+        }
+
+        public  string GetDeviceType()
+        {
+            return DeviceInfo.Platform.ToString();
         }
     }
 }

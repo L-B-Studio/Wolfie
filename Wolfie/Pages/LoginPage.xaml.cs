@@ -1,179 +1,131 @@
 ﻿using CommunityToolkit.Maui.Extensions;
 using System.Net.Mail;
+using System.Text;
 using System.Text.Json;
 using Wolfie.Auth;
-using Wolfie.DebugPages;
 using Wolfie.Helpers;
 using Wolfie.Models;
+using Wolfie.Models.DTOObjects;
+using Wolfie.Models.DTOObjects.Login;
 using Wolfie.Popups;
+using Wolfie.Servers;
 using Wolfie.Services;
 
 namespace Wolfie.Pages;
 
 public partial class LoginPage : ContentPage
 {
-    private readonly SslClientService _tcpService;
-    private readonly string _deviceInfo; 
-    //private readonly GetCurrentLocationService _location = new GetCurrentLocationService();
+    private readonly DeviceInfoHelper _deviceInfo;
     private readonly AuthState _authstate;
-
+    private readonly HttpClientService _httpClient;
+    //private readonly AuthState _authState;
+    private readonly string uri = "auth/login/";
     public LoginPage()
     {
         InitializeComponent();
-        _tcpService = ServiceClientHelper.GetService<SslClientService>();
+
         _authstate = ServiceClientHelper.GetService<AuthState>();
-        _deviceInfo = DeviceInfoHelper.GetAllDeviceInfo();
+        _deviceInfo = ServiceClientHelper.GetService<DeviceInfoHelper>();
+        _httpClient = ServiceClientHelper.GetService<HttpClientService>();
+
         ApplyTheme();
     }
 
-    protected override void OnAppearing()
+
+    protected override async void OnAppearing()
     {
         base.OnAppearing();
-        _tcpService.MessageReceived += OnMessageReceived;
         ApplyTheme();
+
+        if (_httpClient != null)
+            await _httpClient.InitializeAsync();
     }
 
-    protected override void OnDisappearing()
-    {
-        base.OnDisappearing();
-        _tcpService.MessageReceived -= OnMessageReceived;
-    }
+    //protected override void OnDisappearing()
+    //{
+    //    base.OnDisappearing();
+    //    _httpClient?.Dispose();
+    //}
 
-    private async void OnMessageReceived(string msg)
-    {
-        await MainThread.InvokeOnMainThreadAsync(async () =>
-        {
-            try
-            {
-                try
-                {
-                    JsonDocument.Parse(msg);
-                }
-                catch (Exception ex)
-                {
-                    await DisplayAlertAsync("Error in get data from server", ex.Message, "Ok");
-                    return;
-                }
-
-
-                var packet = JsonSerializer.Deserialize<ServerJsonPackage>(msg);
-                if (packet == null || string.IsNullOrWhiteSpace(packet.header)) return;
-                if (packet.body == null) packet.body = new Dictionary<string, string>();
-
-
-                switch (packet.header.Trim().ToLower())
-                {
-                    case "error":
-                        packet.body.TryGetValue("error", out string error);
-                        error = error?.Trim().ToLower();
-                        if (error == "login_failed;invalid_credentials")
-                            await DisplayAlertAsync("Ошибка", $"{msg}\nПочта или пароль неправильные", "Ок");
-                        return;
-
-                    case "success":
-                        try
-                        {
-                            packet.body.TryGetValue("token_refresh", out string refresh_token);
-                            refresh_token = refresh_token?.Trim();
-                            await SecureStorage.SetAsync("refresh_token", refresh_token);
-                            await DisplayAlertAsync("refresh login token", refresh_token, "ok");
-                        }
-                        catch (Exception ex)
-                        {
-                            await DisplayAlertAsync("Error in refresh token", ex.Message, "ok");
-                        }
-                        try
-                        {
-                            packet.body.TryGetValue("token_access", out string access_token);
-                            access_token = access_token?.Trim();
-                            _authstate.AccessToken = access_token;
-                            await DisplayAlertAsync("access login token", access_token, "ok");
-                        }
-                        catch (Exception ex)
-                        {
-                            await DisplayAlertAsync("Error in access token", ex.Message, "ok");
-                        }
-                        try
-                        {
-                            packet.body.TryGetValue("status", out string status);
-                            status = status?.Trim().ToLower();
-                           if (status == "logger" || status == "developer")
-                            {
-                                var device = DeviceInfo.Idiom;
-                                await DisplayAlertAsync("Device Info", device.ToString(), "ok");
-                                await DisplayAlertAsync("Dev Login", $"{msg}\nWelcome to logger status", "enter");
-                                await Shell.Current.GoToAsync(nameof(LoggerDebugPage));
-                                break;
-                            }
-                        }
-                        catch (Exception ex)
-                        {
-                            await DisplayAlertAsync("Error in Logger", ex.Message, "ok");
-                        }
-                        await DisplayAlertAsync("SUCCESS", $"{msg}\nYou have logged in!", "Enter");
-                        await Shell.Current.GoToAsync(nameof(ChatListPage));
-                        await Task.Delay(100);
-                        break;
-                }
-
-            }
-            catch (Exception ex)
-            {
-                await DisplayAlertAsync("Error", ex.Message, "OK");
-                return;
-            }
-        });
-    }
-
-
-
+    // Event handler for login button click
     private async void LoginButtonClicked(object sender, EventArgs e)
     {
+        string email = EmailEntry.Text.Trim();
+        string pass = PasswordEntry.Text;
+
+
+
+        if (string.IsNullOrWhiteSpace(pass) || string.IsNullOrWhiteSpace(email))
+        {
+            await DisplayAlertAsync("Error in pass", "All rows must be filled", "ok");
+            return;
+        }
+
+        if (!IsValidEmail(email))
+        {
+            await DisplayAlertAsync("Error in email", "Write real email", "ok");
+            return;
+        }
+
+        if (!AgreeCheckBox.IsChecked)
+        {
+            await DisplayAlertAsync("Error in rules", "Agree with Terms and Privacy rules", "ок");
+            return;
+        }
+        // Send data to server
         try
         {
-            string email = EmailEntry.Text?.Trim();
-            string pass = PasswordEntry.Text;
-           
-            if (string.IsNullOrWhiteSpace(pass) || string.IsNullOrWhiteSpace(email))
+
+            var user_login = new LoginRequest
             {
-                await DisplayAlertAsync("Error in pass", "All rows must be filled", "ok");
+                Email = email,
+                Password = pass,
+                Device_id = _deviceInfo.GetDeviceManufacture(),
+                Device_type = _deviceInfo.GetDeviceType()
+            };
+
+            var answer = await _httpClient.SendLoginRequestAsync(uri, user_login);
+
+            // FIX: Check if answer is null before processing
+            if (answer == null)
+            {
+                await DisplayAlertAsync("Connection Error", "Failed to connect to server. Please check your internet or server status.", "OK");
                 return;
             }
 
-            if (!IsValidEmail(email))
+            // Process server response
+            var boleanResult = await CheckAnswerAsync(answer);
+            if (boleanResult)
             {
-                await DisplayAlertAsync("Error in email", "Write real email", "ok");
-                return;
+                await Shell.Current.GoToAsync(nameof(ChatListPage));
             }
-
-            if (!AgreeCheckBox.IsChecked)
-            {
-                await DisplayAlertAsync("Error in rules", "Agree with Terms and Privacy rules", "ок");
-                return;
-            }
-            try
-            {
-
-                await _tcpService.SendJsonAsync("login_data", new()
-                {
-                    ["email"] = email,
-                    ["password"] = pass,
-                    ["device_info"] = _deviceInfo
-                });
-                await Task.Delay(500);
-
-            }
-            catch (Exception er)
-            {
-                await DisplayAlertAsync("Exception in send", er.Message, "ОК");
-            }
+            await Task.Delay(500);
         }
-        catch (Exception ex)
+        catch (Exception er)
         {
-            await DisplayAlertAsync("Exception in get data", ex.Message, "ok");
+            await DisplayAlertAsync("Exception in send", er.Message, "ОК");
         }
     }
 
+    // Method to check server response
+    private async Task<bool> CheckAnswerAsync(LoginResponse answer)
+    {
+        if (answer.token_access != null)
+        {
+            SecureStorage.SetAsync("token_refresh", answer.token_refresh);
+            _authstate.AccessToken = answer.token_access;
+            return true;
+        }
+        else
+        {
+            string errorMessage = "Refresh token is null.";
+            await DisplayAlertAsync("Login Failed", errorMessage, "OK");
+            return false;
+        }
+    }
+
+
+    // Email validation method
     public bool IsValidEmail(string email)
     {
         try
@@ -187,24 +139,26 @@ public partial class LoginPage : ContentPage
         }
     }
 
+    // Event handler for theme toggle button click
     private async void OnThemeClicked(object sender, EventArgs e)
     {
         var currentPage = Shell.Current.CurrentPage;
 
         if (currentPage != null)
         {
-            // 1. Уходим в прозрачность
+            // 1. get to transparent
             await currentPage.FadeToAsync(0, 250, Easing.Linear);
 
-            // 2. Меняем тему
+            // 2. change theme
             ThemeService.ToggleTheme();
             ApplyTheme();
 
-            // 3. Возвращаем видимость
+            // 3. back to opaque
             await currentPage.FadeToAsync(1, 250, Easing.Linear);
         }
     }
 
+    // Apply theme based on current setting
     private void ApplyTheme()
     {
         if (ThemeService.IsDarkTheme)
@@ -279,23 +233,27 @@ public partial class LoginPage : ContentPage
         }
     }
 
+    // Event handler for registration button click
     async void RegistrationButtonClicked(object sender, EventArgs e)
     {
         await Shell.Current.GoToAsync(nameof(RegistrationPage));
     }
 
+    // Event handler for terms link tap
     private async void OnTermsTapped(object sender, EventArgs e)
     {
         var popup = new TermsPopup();
         await this.ShowPopupAsync(popup);
     }
 
+    // Event handler for privacy link tap
     private async void OnPrivacyTapped(object sender, EventArgs e)
     {
         var popup = new PrivacyPopup();
         await this.ShowPopupAsync(popup);
     }
 
+    // Event handler for forgot password link tap
     private async void ForgotPasswordCkicked(object sender, EventArgs e)
     {
         var popup = new ForgotPassPopup();

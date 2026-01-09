@@ -80,8 +80,8 @@
 		</PackageReference>
 		<PackageReference Include="Microsoft.Data.Sqlite.Core" Version="10.0.1" />
 		<PackageReference Include="Microsoft.EntityFrameworkCore.Sqlite" Version="10.0.1" />
-		<PackageReference Include="Microsoft.Maui.Controls" Version="10.0.11" />
-		<PackageReference Include="Microsoft.Maui.Essentials" Version="10.0.11" />
+		<PackageReference Include="Microsoft.Maui.Controls" Version="10.0.20" />
+		<PackageReference Include="Microsoft.Maui.Essentials" Version="10.0.20" />
 		<PackageReference Include="Microsoft.Extensions.Logging.Debug" Version="10.0.1" />
 		<PackageReference Include="sqlite-net-pcl" Version="1.9.172" />
 	</ItemGroup>
@@ -123,8 +123,7 @@
 	</ItemGroup>
 
 	<ItemGroup>
-	  <Folder Include="LocalData\Users\" />
-	  <Folder Include="LocalData\Chats\" />
+	  <Folder Include="Models\DTOObjects\Message\" />
 	</ItemGroup>
 
 </Project>

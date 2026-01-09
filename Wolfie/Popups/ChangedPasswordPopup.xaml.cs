@@ -1,91 +1,32 @@
 using CommunityToolkit.Maui.Extensions;
 using CommunityToolkit.Maui.Views;
 using Microsoft.Maui.ApplicationModel;
+using System.Text;
 using System.Text.Json;
 using Wolfie.Helpers;
 using Wolfie.Models;
+using Wolfie.Models.DTOObjects.ChangePassword;
+using Wolfie.Servers;
 using Wolfie.Services;
 
 namespace Wolfie.Popups;
 
 public partial class ChangedPasswordPopup : Popup
 {
-    private readonly SslClientService _client;
+    private readonly DeviceInfoHelper _deviceinfo;
     private string _reset_token;
+    private readonly HttpClientService _httpClient;
+    private readonly string uri = "auth/changedpass";
     public ChangedPasswordPopup(string reset_token = "none_token_getted")
     {
         InitializeComponent();
         _reset_token = reset_token;
         ApplyTheme();
-        _client = ServiceClientHelper.GetService<SslClientService>();
-        Opened += OnPopupOpened;
-        Closed += OnPopupClosed;
+        _httpClient = ServiceClientHelper.GetService<HttpClientService>();
+        _deviceinfo = ServiceClientHelper.GetService<DeviceInfoHelper>();
     }
 
-    private void OnPopupOpened(object? sender, EventArgs e)
-    {
-        _client.MessageReceived += OnMessageReceived;
-    }
-
-    private void OnPopupClosed(object? sender, EventArgs e)
-    {
-        _client.MessageReceived -= OnMessageReceived;
-    }
-
-
-
-    private async void OnMessageReceived(string msg)
-    {
-        await MainThread.InvokeOnMainThreadAsync(async () =>
-        {
-            try
-            {
-                try
-                {
-                    JsonDocument.Parse(msg);
-                }
-                catch (Exception ex)
-                {
-                    await ShowAlert("Error", ex.Message);
-                    return;
-                }
-                var packet = JsonSerializer.Deserialize<ServerJsonPackage>(msg);
-                if (packet == null || string.IsNullOrWhiteSpace(packet.header)) return;
-                if (packet.body == null) packet.body = new Dictionary<string, string>();
-
-                switch (packet.header.Trim().ToLower())
-                {
-                    case "error":
-                        packet.body.TryGetValue("error", out string error);
-                        error = error?.Trim().ToLower();
-                        if (error == "changedpassword_failed;pass_is_repeated")
-                            await ShowAlert("Error", $"{msg}\nPassword is repeated");
-                        else if (error == "invalid_or_expired_token")
-                            await ShowAlert("Error", $"{msg}\nU're bitch  ЪУЪ");
-                        return;
-
-                    case "success":
-                        packet.body.TryGetValue("success", out string success);
-                        success = success?.Trim().ToLower();
-                        if (success == "change_success;password_changed")
-                        {
-                            await ShowAlert("SUCCESS", $"{msg}\nTry to login with new password now");
-                            await Task.Delay(100); // чтобы UI успел обновиться
-                            await CloseAsync();
-                        }
-                        break;
-                    default: await ShowAlert("Default message" , msg); return;
-                }
-            }
-            catch (Exception ex)
-            {
-                await ShowAlert("Ошибка", ex.Message);
-                return;
-
-            }
-        });
-    }
-
+    // Event handler for confirm button click
     private async void OnConfirmClicked(object sender, EventArgs e)
     {
         string newPass = NewPasswordEntry.Text?.Trim();
@@ -103,24 +44,31 @@ public partial class ChangedPasswordPopup : Popup
             return;
         }
 
+        // Send password change request to server
         try
         {
+            var changepass_dto = new ChangePasswordRequest
+            {
+                Token_reset = _reset_token,
+                Password = newPass,
+                Device_id = _deviceinfo.GetDeviceManufacture(),
+                Device_type = _deviceinfo.GetDeviceType()
+            };
 
-            await _client.SendJsonAsync("changedpass_data", new() 
-            { 
-                ["token_reset"] = _reset_token,
-                ["password"] = newPass
-            });
-            await Task.Delay(500);
+            var answer = await _httpClient.SendChangePassRequestAsync(uri, changepass_dto);
+            
+            await CloseAsync();
         }
         catch (Exception ex) { await ShowAlert("Error", ex.Message); }
     }
 
+    // method to show alert
     private async Task ShowAlert(string title, string message)
     {
         await Application.Current.MainPage.DisplayAlertAsync(title, message, "OK");
     }
 
+    // method to apply theme
     private void ApplyTheme()
     {
         if (ThemeService.IsDarkTheme)

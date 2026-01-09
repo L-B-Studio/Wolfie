@@ -1,116 +1,37 @@
 using CommunityToolkit.Maui.Extensions;
 using CommunityToolkit.Maui.Views;
 using System.Linq.Expressions;
+using System.Text;
 using System.Text.Json;
 using Wolfie.Helpers;
 using Wolfie.Models;
+using Wolfie.Models.DTOObjects.ForgotPassword;
+using Wolfie.Servers;
 using Wolfie.Services;
 
 namespace Wolfie.Popups;
 
 public partial class EmailCodeVerifPopup : Popup
 {
-    private readonly SslClientService _tcpService;
-    //private readonly GetCurrentLocationService _location = new GetCurrentLocationService();
-    private readonly string _deviceInfo;
+    private readonly DeviceInfoHelper _deviceInfo;
     private bool _isEditing = false;
     private string _email;
-    private bool _fromRegister;
 
-    public EmailCodeVerifPopup(string email, bool fromRegister = false)
+    private readonly string uri = "auth/forgotpass_verify";
+    private readonly HttpClientService _httpClient;
+
+    public EmailCodeVerifPopup(string email)
     {
         InitializeComponent();
         ApplyTheme();
-        _tcpService = ServiceClientHelper.GetService<SslClientService>();
-        _deviceInfo = DeviceInfoHelper.GetAllDeviceInfo();
+
+        _httpClient = ServiceClientHelper.GetService<HttpClientService>();
+
+        _deviceInfo = ServiceClientHelper.GetService<DeviceInfoHelper>();
         _email = email;
-        _fromRegister = fromRegister;
-        Opened += OnPopupOpened;
-        Closed += OnPopupClosed;
     }
 
-    private void OnPopupOpened(object? sender, EventArgs e)
-    {
-        _tcpService.MessageReceived += OnMessageReceived;
-    }
-
-    private void OnPopupClosed(object? sender, EventArgs e)
-    {
-        _tcpService.MessageReceived -= OnMessageReceived;
-    }
-
-    private async void OnMessageReceived(string msg)
-    {
-        await MainThread.InvokeOnMainThreadAsync(async () =>
-        {
-
-            try
-            {
-                try
-                {
-                    JsonDocument.Parse(msg);
-                }
-                catch (Exception ex)
-                {
-                    await ShowAlert("Error", ex.Message);
-                    return;
-                }
-                var packet = JsonSerializer.Deserialize<ServerJsonPackage>(msg);
-                if (packet == null || string.IsNullOrWhiteSpace(packet.header)) return;
-                if (packet.body == null) packet.body = new Dictionary<string, string>();
-
-                switch (packet.header.Trim().ToLower())
-                {
-                    case "error":
-                        packet.body.TryGetValue("error", out string error);
-                        error = error?.Trim().ToLower();
-                        if (error == "emailcode_failed;invalid_code")
-                        {
-                            await ShowAlert("Error", $"{msg}\nInvalid code");
-                        }
-                        if (error == "registration_failed;unaccess_token")
-                            await ShowAlert("Error", $"{msg}\nU're bitch  ЪУЪ");
-                        return;
-
-                    case "success":
-                        packet.body.TryGetValue("success", out string success);
-                        success = success?.Trim().ToLower();
-                        switch (success){
-                            case "verify_code_confirm":
-                                packet.body.TryGetValue("token_reset", out string reset_token);
-                                reset_token = reset_token?.Trim();
-                                await ShowAlert("reset token exception", reset_token);
-                                if (reset_token != null)
-                                {
-                                    await CloseAsync();
-                                    var newPopup = new ChangedPasswordPopup(reset_token);
-                                    await Task.Delay(100); // чтобы UI успел обновиться
-                                    await Application.Current.MainPage.ShowPopupAsync(newPopup);
-                                }
-                                else if (reset_token == "registration_success;email_verified")
-                                {
-                                    await ShowAlert("SUCCESS", $"{msg}\nRegistration have been completed!", "Enter");
-                                    return;
-                                }
-                                break;
-                            default:
-                                return;
-                        }
-                       
-                        break;
-                    default: return;
-                }
-            }
-            catch (Exception ex)
-            {
-                await ShowAlert("Error", ex.Message);
-                return;
-
-            }
-        });
-    }
-
-
+    // Event handler for TextChanged event of the Entry controls
     private void CodeEntry_TextChanged(object sender, TextChangedEventArgs e)
     {
         if (_isEditing) return;
@@ -119,7 +40,7 @@ public partial class EmailCodeVerifPopup : Popup
         var entry = sender as Entry;
         string text = entry.Text ?? "";
 
-        // Оставляем только буквы и цифры
+        
         text = new string(text.Where(char.IsLetterOrDigit).ToArray());
         entry.Text = text;
 
@@ -137,38 +58,43 @@ public partial class EmailCodeVerifPopup : Popup
         _isEditing = false;
     }
 
+    // Event handler for the Submit button click
     private async void VerifButtonClicked(object sender, EventArgs e)
     {
         string code = $"{CodeEntry1.Text}{CodeEntry2.Text}{CodeEntry3.Text}";
-        //var location = await _location.GetCurrentLocationAsync();
-        //string deviceLocation = location != null ? $"{location.Latitude}, {location.Longitude}" : "Unknown";
         if (code.Length != 9)
         {
             await Application.Current.MainPage.DisplayAlertAsync("Error", "Write all 3 nums in all 3 columns", "OK");
             return;
         }
 
+        // Prepare data and send request to server
         try
         {
-            if (_fromRegister == true)
+            var verifyemail_dto = new ForgotpassVerifyRequest
             {
-                await _tcpService.SendJsonAsync("register_verify_data", new()
-                {
-                    ["email"] = _email,
-                    ["code"] = code,
-                    ["device_info"] = _deviceInfo
-                });
-                await Task.Delay(500);
-            }
-            else
+                Email = _email,
+                Code = code
+                };
+
+
+            var answer = await _httpClient.SendForgotpassVerifyRequestAsync(uri, verifyemail_dto);
+            
+            if(answer == null)
             {
-                await _tcpService.SendJsonAsync("forgotpass_verify_data", new() { 
-                    ["email"] = _email, 
-                    ["code"] = code,
-                    ["device_info"] = _deviceInfo
-                });
-                await Task.Delay(500);
+                await ShowAlert("Error", "No response from server. Please try again later.");
             }
+            //// Process server response
+            var boleanResult = await CheckAnswerAsync(answer);
+            if (boleanResult)
+            {
+                await CloseAsync();
+                var newPopup = new ChangedPasswordPopup(answer.token_reset);
+                await Task.Delay(100);
+                await Application.Current.MainPage.ShowPopupAsync(newPopup);
+            }
+            await Task.Delay(500);
+            
         }
         catch (Exception ex)
         {
@@ -176,11 +102,28 @@ public partial class EmailCodeVerifPopup : Popup
         }
     }
 
+    // Method to check the server response
+    private async Task<bool> CheckAnswerAsync(ForgotpassVerifyResponse answer)
+    {
+        if (answer.token_reset != null)
+        {
+            return true;
+        }
+        else
+        {
+            //string errorMessage = answer.body.ContainsKey("error") ? answer.body["error"] : "Unknown error occurred.";
+            await ShowAlert("Change password -> Failed", "Reset token is null");
+            return false;
+        }
+    }
+
+    // Method to show alert messages
     private async Task ShowAlert(string title, string message, string end = "OK")
     {
         await Application.Current.MainPage.DisplayAlertAsync(title, message, end);
     }
 
+    // Method to apply theming based on the current theme
     private void ApplyTheme()
     {
         if (ThemeService.IsDarkTheme)

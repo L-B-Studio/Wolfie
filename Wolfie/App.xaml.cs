@@ -2,28 +2,24 @@
 using Microsoft.Maui.Platform;
 using Wolfie.Helpers;
 using Wolfie.Pages;
+using Wolfie.Servers;
 using Wolfie.Services;
 
 namespace Wolfie
 {
     public partial class App : Application
     {
-        private readonly SslClientService _client;
-
+        private readonly HttpClientService _httpClient;// = new HttpClientService();
         public App(IServiceProvider services)
         {
             InitializeComponent();
             ThemeService.Init();
 
-            _client = services.GetRequiredService<SslClientService>();
-            _ = InitAsync();
+            _httpClient = services.GetRequiredService<HttpClientService>();
         }
 
-        private async Task InitAsync()
-        {
-            await _client.InitializeAsync();
-            await _client.EnsureConnectedAsync();
-        }
+        
+
 
         protected override Window CreateWindow(IActivationState? activationState)
         {

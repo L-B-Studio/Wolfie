@@ -80,7 +80,7 @@
                         </VisualStateManager.VisualStateGroups>
 
                         <Image Grid.Column="0"
-                   Source="{Binding Avatar}"
+                   Source="{Binding ChatAvatarName}"
                    WidthRequest="50"
                    HeightRequest="50"
                    Aspect="AspectFill"

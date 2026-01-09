@@ -3,6 +3,7 @@ using System;
 
 namespace Wolfie.Models
 {
+    // Model representing a message item in the database
     public class MessageItemModel
     {
         [PrimaryKey]

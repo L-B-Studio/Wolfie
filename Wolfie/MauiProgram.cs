@@ -3,6 +3,7 @@ using Microsoft.Extensions.Logging;
 using Wolfie.Auth;
 using Wolfie.Helpers;
 using Wolfie.Pages;
+using Wolfie.Servers;
 using Wolfie.Services;
 using Wolfie.ViewModels;
 using static Wolfie.ViewModels.ChatItemViewModel;
@@ -29,16 +30,15 @@ namespace Wolfie
 #if DEBUG
             builder.Logging.AddDebug();
 #endif
-            builder.Services.AddSingleton<SslClientService>();
-            builder.Services.AddSingleton<ChatStorageService>();
-            builder.Services.AddSingleton<LocalDbService>();
             builder.Services.AddSingleton<AuthState>();
+            builder.Services.AddSingleton<HttpClientService>();
+            builder.Services.AddSingleton<DeviceInfoHelper>();
 
             builder.Services.AddTransient<ChatItemViewModel>();
             builder.Services.AddTransient<ChatListPage>();
-            builder.Services.AddSingleton<AuthState>();
 
             return builder.Build();
         }
     }
 }
+

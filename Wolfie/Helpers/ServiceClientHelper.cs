@@ -4,6 +4,7 @@ using System.Text;
 
 namespace Wolfie.Helpers
 {
+    //Special class to get service clients from MAUI DI container
     public class ServiceClientHelper
     {
         public static T GetService<T>() =>

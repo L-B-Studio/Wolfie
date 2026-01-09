@@ -1,98 +1,35 @@
 ﻿using CommunityToolkit.Maui.Extensions;
 using CommunityToolkit.Maui.Views;
+using System.Text;
 using System.Text.Json;
 using System.Xml.Linq;
 using Wolfie.Helpers;
 using Wolfie.Models;
+using Wolfie.Models.DTOObjects.ForgotPassword;
 using Wolfie.Pages;
+using Wolfie.Servers;
 using Wolfie.Services;
 
 namespace Wolfie.Popups;
 
 public partial class ForgotPassPopup : Popup
 {
-    private readonly SslClientService _tcpService;
+    private readonly HttpClientService _httpClient;
+    private readonly string uri = "auth/forgotpass";   
+
     public ForgotPassPopup()
     {
         InitializeComponent();
         ApplyTheme();
-        _tcpService = ServiceClientHelper.GetService<SslClientService>();
-        Opened += OnPopupOpened;
-        Closed += OnPopupClosed;
+
+        _httpClient = ServiceClientHelper.GetService<HttpClientService>();
     }
 
-    private void OnPopupOpened(object? sender, EventArgs e)
-    {
-        _tcpService.MessageReceived += OnMessageReceivedAsync;
-    }
-
-    private void OnPopupClosed(object? sender, EventArgs e)
-    {
-        _tcpService.MessageReceived -= OnMessageReceivedAsync;
-    }
-
-    private async void OnMessageReceivedAsync(string msg)
-    {
-
-        await MainThread.InvokeOnMainThreadAsync(async () =>
-        {
-            string email = EmailEntry.Text?.Trim();
-            try
-            {
-                try
-                {
-                    JsonDocument.Parse(msg);
-                }
-                catch (Exception ex)
-                {
-                    await ShowAlert("Error", ex.Message);
-                    return;
-                }
-
-
-                var packet = JsonSerializer.Deserialize<ServerJsonPackage>(msg);
-                if (packet == null || string.IsNullOrWhiteSpace(packet.header)) return;
-                if (packet.body == null) packet.body = new Dictionary<string, string>();
-
-                switch (packet.header.Trim().ToLower())
-                {
-                    case "error":
-                        packet.body.TryGetValue("error", out string error);
-                        error = error?.Trim().ToLower();
-                        if (error == "forgotpass_failed;email_not_found")
-                            await ShowAlert("Error", $"{msg}\nThis email is unregistered");
-                        return;
-
-                    case "success":
-                        packet.body.TryGetValue("success", out string success);
-                        success = success?.Trim().ToLower();
-                        if (success == "forgotpass_success;confirmation_code_sent")
-                        {
-                            await CloseAsync();
-                            var newPopup = new EmailCodeVerifPopup(email);
-                            await Task.Delay(100); 
-                            await Application.Current.MainPage.ShowPopupAsync(newPopup);
-                        }
-                        break;
-                    default: return;
-                }
-
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine($"MessageReceived error: {ex}");
-
-                await ShowAlert("Ошибка", ex.Message);
-                return;
-            }
-        });
-    }
-
-
+    // Event handler for the Submit button click
     private async void SendCodeButtonClicked(object sender, EventArgs e)
     {
         string email = EmailEntry.Text?.Trim();
-        string dataMessage = $"forgotpass_data ; {email}";
+
 
         if (string.IsNullOrEmpty(email))
         {
@@ -101,21 +38,28 @@ public partial class ForgotPassPopup : Popup
         }
         try
         {
-            await _tcpService.SendJsonAsync("forgotpass_data", new() { ["email"] = email });
+            var forgotpass_dto = new ForgotPassRequest { Email = email };
+
+            var answer = await _httpClient.SendForgotPassRequestAsync(uri,  forgotpass_dto);
+
+            await CloseAsync();
+            var popup = new EmailCodeVerifPopup(email);
+            await Application.Current.MainPage.ShowPopupAsync(popup);
             await Task.Delay(500);
         }
         catch (Exception ex)
         {
             await ShowAlert("Error: ", ex.Message);
         }
-
     }
 
+    // Method to show alert messages
     private async Task ShowAlert(string title, string message)
     {
         await Application.Current.MainPage.DisplayAlertAsync(title, message, "OK");
     }
 
+    // Method to apply theme based on ThemeService
     private void ApplyTheme()
     {
         if (ThemeService.IsDarkTheme)

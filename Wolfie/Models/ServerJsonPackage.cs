@@ -5,6 +5,7 @@ using System.Text.Json;
 
 namespace Wolfie.Models
 {
+    // Model representing a server JSON package
     public class ServerJsonPackage
     {
         public string header { get; set; }

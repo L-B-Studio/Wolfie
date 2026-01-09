@@ -11,6 +11,22 @@ public class ChatItemViewModel : INotifyPropertyChanged
 
     public event PropertyChangedEventHandler? PropertyChanged;
 
+    public ChatItemViewModel()
+    {
+        const string savedChatId = "saved_messages";
+        _model = new ChatItemModel
+        {
+            ChatId = savedChatId,
+            ChatTitle = "Saved Messages",
+            ChatAvatarName = "default_user_icon.png", // local image
+            LastMessage = string.Empty,
+            LastActivityDate = DateTime.UtcNow,
+            IsUnreaded = false,
+            UnreadedMessageCount = 0
+        };
+        UpdateAvatar();
+    }
+
     public ChatItemViewModel(ChatItemModel model)
     {
         _model = model;
@@ -88,7 +104,7 @@ public class ChatItemViewModel : INotifyPropertyChanged
         _model.IsUnreaded = chat.IsUnreaded;
         _model.UnreadedMessageCount = chat.UnreadedMessageCount;
 
-        // Обновляем свойства для UI
+        // Update chat if needed
         NotifyAll();
     }
 

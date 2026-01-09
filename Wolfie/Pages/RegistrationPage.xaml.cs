@@ -1,40 +1,43 @@
 ﻿using CommunityToolkit.Maui.Extensions;
+using System.Text;
 using System.Text.Json;
 using Wolfie.Auth;
 using Wolfie.Helpers;
 using Wolfie.Models;
+using Wolfie.Models.DTOObjects.Login;
+using Wolfie.Models.DTOObjects.Registration;
 using Wolfie.Popups;
+using Wolfie.Servers;
 using Wolfie.Services;
 
 namespace Wolfie.Pages;
 
 public partial class RegistrationPage : ContentPage
 {
-    private readonly SslClientService _tcpService;
     private readonly AuthState _authstate;
-    private readonly string _deviceInfo;
+    private readonly HttpClientService _httpClient;
+    private readonly DeviceInfoHelper _deviceInfo;
+    private readonly string uri = "auth/registration";
     public RegistrationPage()
     {
         InitializeComponent();
-        _tcpService = ServiceClientHelper.GetService<SslClientService>();
         _authstate = ServiceClientHelper.GetService<AuthState>() ;
-        _deviceInfo = DeviceInfoHelper.GetAllDeviceInfo();
-
+        _deviceInfo = ServiceClientHelper.GetService<DeviceInfoHelper>();
+        _httpClient = ServiceClientHelper.GetService<HttpClientService>();
     }
 
     protected override void OnAppearing()
     {
         base.OnAppearing();
-        _tcpService.MessageReceived += OnMessageReceived;
         ApplyTheme();
     }
 
     protected override void OnDisappearing()
     {
         base.OnDisappearing();
-        _tcpService.MessageReceived -= OnMessageReceived;
     }
 
+    // Event handler for registration button click
     private async void RegistrationButtonClicked(object sender, EventArgs e)
     {
         string username = NicknameEntry.Text?.Trim();
@@ -87,16 +90,35 @@ public partial class RegistrationPage : ContentPage
             await DisplayAlertAsync("Error", "U must be agree with Privacy and Terms Rules", "Ок");
             return;
         }
-
+        // Send registration data to server
         try
         {
-            await _tcpService.SendJsonAsync("registration_data", new() {
-                ["username"]= username,
-                ["email"] = email,
-                ["password"] = createPass,
-                ["birthday"] = birthday.ToString("MM-dd-yyyy"),
-                ["device_info"] = _deviceInfo
-            });
+            var registration_dto = new RegistrationRequest
+            {
+                Username = username,
+                Email = email,
+                Password = createPass,
+                Birthday = birthday.ToString("yyyy-MM-dd"),
+                Device_id = _deviceInfo.GetDeviceManufacture(),
+                Device_type = _deviceInfo.GetDeviceType()
+            };
+
+            var answer = await _httpClient.SendRegistrationRequestAsync(uri, registration_dto);
+           if (answer == null)
+            {
+                await DisplayAlertAsync("Connection Error", "Failed to connect to server. Please check your internet or server status.", "OK");
+                return;
+            }
+
+            //// Process server response
+            var booleanResult = await CheckAnswerAsync(answer);
+            
+            if (booleanResult)
+            {
+                await DisplayAlertAsync("Success", "Registration completed successfully!", "Ок");
+                await Shell.Current.GoToAsync(nameof(ChatListPage));
+            }
+
             await Task.Delay(500);
         }
         catch(Exception ex)
@@ -105,89 +127,24 @@ public partial class RegistrationPage : ContentPage
         }
     }
 
-    private async void OnMessageReceived(string msg)
+    // Method to check server response for registration
+    private async Task<bool> CheckAnswerAsync(RegistrationResponse answer)
     {
-        await MainThread.InvokeOnMainThreadAsync(async () =>
+        if (answer.token_access != null)
         {
-            string email = EmailEntry.Text?.Trim();
-            try
-            {
-                try
-                {
-                    JsonDocument.Parse(msg);
-                }
-                catch (Exception ex)
-                {
-                    await DisplayAlertAsync("Error", ex.Message, "Ok");
-                    return;
-                }
-
-                var packet = JsonSerializer.Deserialize<ServerJsonPackage>(msg);
-                if (packet == null || string.IsNullOrWhiteSpace(packet.header)) return;
-                if (packet.body == null) packet.body = new Dictionary<string, string>();
-
-
-                switch (packet.header.ToLower().Trim())
-                {
-                    case "error":
-                        packet.body.TryGetValue("error", out string error);
-                        error = error?.Trim().ToLower();
-                        if (error == "registration_failed;email_exists")
-                        { await DisplayAlertAsync("Error", $"{msg}\nemail have been registered yearlier", "Ок"); }
-                        else if (error == "registration_failed;email_not_found")
-                        {
-                            await DisplayAlertAsync("Error", $"{msg}\nIt's unreal email , pls register real email", "Ок");
-                        }
-                        return;
-                    case "success":
-                        try
-                        {
-                            packet.body.TryGetValue("token_refresh", out string refresh_token);
-                            refresh_token = refresh_token?.Trim();
-                            await SecureStorage.SetAsync("refresh_token", refresh_token);
-                            await DisplayAlertAsync("refresh reg token", refresh_token, "ok");
-                        }
-                        catch (Exception ex)
-                        {
-                            await DisplayAlertAsync("Error in refresh token", ex.Message, "ok");
-                        }
-                        try
-                        {
-                            packet.body.TryGetValue("token_access", out string access_token);
-                            access_token = access_token?.Trim();
-                            _authstate.AccessToken = access_token;
-                            await DisplayAlertAsync("access reg token", access_token, "ok");
-                        }
-                        catch (Exception ex)
-                        {
-                            await DisplayAlertAsync("Error in access token", ex.Message, "ok");
-                        }
-                        packet.body.TryGetValue("success", out string sucess);
-                        sucess = sucess?.Trim().ToLower();
-                        if (sucess == $"registration_success;ok")
-                        {
-                            //var popup = new EmailCodeVerifPopup(email , true);
-                            //await this.ShowPopupAsync(popup);
-                            await DisplayAlertAsync("SUCCESS", $"{msg}\nYou have registered!", "Enter");
-                            await Shell.Current.GoToAsync(nameof(ChatListPage));
-                            await Task.Delay(100);
-                            break;
-                        }
-                        break;
-                    default:
-                        await DisplayAlertAsync("NONE" , msg , "ok");
-                        return;
-
-                }
-            }
-            catch (Exception ex)
-            {
-                await DisplayAlertAsync("Error", ex.Message, "OK");
-                return;
-            }
-        });
+            SecureStorage.SetAsync("token_refresh", answer.token_refresh);
+            _authstate.AccessToken = answer.token_access;
+            return true;
+        }
+        else
+        {
+            string errorMessage = "Refresh token is null.";
+            await DisplayAlertAsync("Login Failed", errorMessage, "OK");
+            return false;
+        }
     }
 
+    // Simple email validation method
     public static bool IsValidEmail(string email)
     {
         try
@@ -201,6 +158,7 @@ public partial class RegistrationPage : ContentPage
         }
     }
 
+    // Simple birthday date validation method
     private bool IsValidBirthdayDate(DateTime dob)
     {
         var today = DateTime.Today;
@@ -209,12 +167,14 @@ public partial class RegistrationPage : ContentPage
         return age >= 3 && age <= 120;
     }
 
+    // Event handler for back button click
     async void OnBackClicked(object sender, EventArgs e)
     {
             await Shell.Current.GoToAsync("..");
 
     }
 
+    // Apply theme based on current theme setting
     private void ApplyTheme()
     {
         if (ThemeService.IsDarkTheme)
@@ -303,24 +263,26 @@ public partial class RegistrationPage : ContentPage
         }
     }
 
+    // Event handler for theme toggle button click
     private async void OnThemeClicked(object sender, EventArgs e)
     {
         var currentPage = Shell.Current.CurrentPage;
 
         if (currentPage != null)
         {
-            // 1. Уходим в прозрачность
+            // 1. Get to transparent
             await currentPage.FadeToAsync(0, 250, Easing.Linear);
 
-            // 2. Меняем тему
+            // 2. change theme
             ThemeService.ToggleTheme();
             ApplyTheme();
 
-            // 3. Возвращаем видимость
+            // 3. back to opaque
             await currentPage.FadeToAsync(1, 250, Easing.Linear);
         }
     }
 
+    // Event handler for terms link tap
     private async void OnTermsTapped(object sender, EventArgs e)
     {
         var popup = new TermsPopup();
@@ -328,6 +290,7 @@ public partial class RegistrationPage : ContentPage
 
     }
 
+    // Event handler for privacy link tap
     private async void OnPrivacyTapped(object sender, EventArgs e)
     {
         var popup = new PrivacyPopup();
