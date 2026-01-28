@@ -28,7 +28,7 @@ public partial class ForgotPassPopup : Popup
     // Event handler for the Submit button click
     private async void SendCodeButtonClicked(object sender, EventArgs e)
     {
-        string email = EmailEntry.Text?.Trim();
+        string email = EmailEntry.Text.Trim();
 
 
         if (string.IsNullOrEmpty(email))

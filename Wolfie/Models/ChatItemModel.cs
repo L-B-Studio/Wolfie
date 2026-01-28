@@ -1,24 +1,22 @@
-﻿using SQLite;
+﻿using System;
+using CommunityToolkit.Mvvm.ComponentModel;
 
 namespace Wolfie.Models
 {
-    // Model representing a chat item in the database
-    [Table("Chats")]
-    public class ChatItemModel
+    public partial class ChatItemModel : ObservableObject
     {
-        [PrimaryKey]
         public string ChatId { get; set; } = string.Empty;
-
         public string ChatTitle { get; set; } = string.Empty;
+        public string ChatType { get; set; } = string.Empty;
+        public string Sender { get; set; } = string.Empty;
 
-        public byte[]? ChatAvatarBytes { get; set; }
-        public string? ChatAvatarName { get; set; }
+        [ObservableProperty]
+        private string lastMessage = string.Empty;
 
-        public string LastMessage { get; set; } = string.Empty;
-        public DateTime LastActivityDate { get; set; }
+        [ObservableProperty]
+        private int? unreadedMessageCount = 0;
 
-        public bool IsPinned { get; set; }
-        public bool IsUnreaded { get; set; }
-        public int UnreadedMessageCount { get; set; }
+        // Вспомогательное свойство для инициала (Аватара)
+        public string Initial => !string.IsNullOrWhiteSpace(ChatTitle) ? ChatTitle[0].ToString().ToUpper() : "?";
     }
 }

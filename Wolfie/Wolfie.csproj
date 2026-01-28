@@ -1,129 +1,232 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
+
+
 	<PropertyGroup>
+
 		<TargetFrameworks>
+
 			net10.0-android;
+
 			net10.0-ios;
+
 			net10.0-maccatalyst
+
 		</TargetFrameworks>
+
 		<TargetFrameworks Condition="$([MSBuild]::IsOSPlatform('windows'))">$(TargetFrameworks);net10.0-windows10.0.19041.0</TargetFrameworks>
+
 		<TargetSdkVersion>34</TargetSdkVersion>
+
 		<MinSdkVersion>28</MinSdkVersion>
-		<!-- Note for MacCatalyst:
-		The default runtime is maccatalyst-x64, except in Release config, in which case the default is maccatalyst-x64;maccatalyst-arm64.
-		When specifying both architectures, use the plural <RuntimeIdentifiers> instead of the singular <RuntimeIdentifier>.
-		The Mac App Store will NOT accept apps with ONLY maccatalyst-arm64 indicated;
-		either BOTH runtimes must be indicated or ONLY macatalyst-x64. -->
-		<!-- For example: <RuntimeIdentifiers>maccatalyst-x64;maccatalyst-arm64</RuntimeIdentifiers> -->
+
 
 		<EazfuscatorIntegration>Enabled</EazfuscatorIntegration>
+
 		<OutputType>Exe</OutputType>
+
 		<RootNamespace>Wolfie</RootNamespace>
+
 		<UseMaui>true</UseMaui>
+
 		<SingleProject>true</SingleProject>
+
 		<ImplicitUsings>enable</ImplicitUsings>
+
 		<Nullable>enable</Nullable>
 
+		<PublishTrimmed>true</PublishTrimmed>
+
+
+
 		<!-- Display name -->
+
 		<ApplicationTitle>Wolfie</ApplicationTitle>
 
+
+
 		<!-- App Identifier -->
+
 		<ApplicationId>com.wolfie.app</ApplicationId>
+
 		<AssemblyName>Wolfie</AssemblyName>
+
 		<AndroidPackageFormat>apk</AndroidPackageFormat>
 
+
+
 		<!-- Versions -->
+
 		<ApplicationDisplayVersion>0.0.13</ApplicationDisplayVersion>
+
 		<ApplicationVersion>13</ApplicationVersion>
 
+
+
 		<!-- To develop, package, and publish an app to the Microsoft Store, see: https://aka.ms/MauiTemplateUnpackaged -->
+
 		<WindowsPackageType>None</WindowsPackageType>
 
+
+
 		<SupportedOSPlatformVersion Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'ios'">15.0</SupportedOSPlatformVersion>
+
 		<SupportedOSPlatformVersion Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'maccatalyst'">15.0</SupportedOSPlatformVersion>
+
 		<SupportedOSPlatformVersion Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'android'">26.0</SupportedOSPlatformVersion>
+
 		<SupportedOSPlatformVersion Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'windows'">10.0.17763.0</SupportedOSPlatformVersion>
+
 		<TargetPlatformMinVersion Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'windows'">10.0.17763.0</TargetPlatformMinVersion>
+
 	</PropertyGroup>
 
+
+
 	<ItemGroup>
+
 		<!-- App Icon -->
+
 		<MauiIcon Include="Resources\AppIcon\appicon.svg" ForegroundFile="Resources\AppIcon\appiconfg.svg" Color="#512BD4" />
 
+
+
 		<!-- Splash Screen -->
+
 		<MauiSplashScreen Include="Resources\Splash\splash.svg" Color="#FFFFFF" BaseSize="128,128" />
 
+
+
 		<!-- Images -->
+
 		<MauiImage Include="Resources\Images\*" />
-		
+
+
 		<!-- Videos -->
-		
+
+
 		<!-- Custom Fonts -->
+
 		<MauiFont Include="Resources\Fonts\*" />
 
+
+
 		<!-- Raw Assets (also remove the "Resources\Raw" prefix) -->
+
 		<MauiAsset Include="Resources\Raw\**" LogicalName="%(RecursiveDir)%(Filename)%(Extension)" />
 
+
+
 	</ItemGroup>
 
-	<ItemGroup>
-	  <MauiFont Remove="Resources\Fonts\OpenSans-Regular.ttf" />
-	  <MauiFont Remove="Resources\Fonts\OpenSans-Semibold.ttf" />
-	</ItemGroup>
+
 
 	<ItemGroup>
+
+		<MauiFont Remove="Resources\Fonts\OpenSans-Semibold.ttf" />
+
+	</ItemGroup>
+
+
+
+	<ItemGroup>
+
 		<PackageReference Include="CommunityToolkit.Maui" Version="13.0.0" />
+
 		<PackageReference Include="CommunityToolkit.Maui.MediaElement" Version="7.0.0" />
+
+		<PackageReference Include="CommunityToolkit.Mvvm" Version="8.4.0" />
+
 		<PackageReference Include="Gapotchenko.Eazfuscator.NET" Version="2025.3.195">
-		  <PrivateAssets>all</PrivateAssets>
-		  <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+
+			<PrivateAssets>all</PrivateAssets>
+
+			<IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+
 		</PackageReference>
-		<PackageReference Include="Microsoft.Data.Sqlite.Core" Version="10.0.1" />
-		<PackageReference Include="Microsoft.EntityFrameworkCore.Sqlite" Version="10.0.1" />
-		<PackageReference Include="Microsoft.Maui.Controls" Version="10.0.20" />
-		<PackageReference Include="Microsoft.Maui.Essentials" Version="10.0.20" />
-		<PackageReference Include="Microsoft.Extensions.Logging.Debug" Version="10.0.1" />
+
+		<PackageReference Include="Microsoft.Data.Sqlite.Core" Version="10.0.2" />
+
+		<PackageReference Include="Microsoft.EntityFrameworkCore.Sqlite" Version="10.0.2" />
+
+		<PackageReference Include="Microsoft.Maui.Controls" Version="10.0.30" />
+
+		<PackageReference Include="Microsoft.Maui.Essentials" Version="10.0.30" />
+
+		<PackageReference Include="Microsoft.Extensions.Logging.Debug" Version="10.0.2" />
+
+		<PackageReference Include="Plugin.LocalNotification" Version="13.0.0" />
+
 		<PackageReference Include="sqlite-net-pcl" Version="1.9.172" />
+
 	</ItemGroup>
 
-	<ItemGroup>
-	  <Compile Update="Popups\PrivacyPopup.xaml.cs">
-	    <DependentUpon>PrivacyPopup.xaml</DependentUpon>
-	  </Compile>
-	</ItemGroup>
+
 
 	<ItemGroup>
-	  <MauiXaml Update="DebugPages\LoggerDebugPage.xaml">
-	    <Generator>MSBuild:Compile</Generator>
-	  </MauiXaml>
-	  <MauiXaml Update="Pages\ChatListPage.xaml">
-	    <Generator>MSBuild:Compile</Generator>
-	  </MauiXaml>
-	  <MauiXaml Update="Pages\LoginPage.xaml">
-	    <Generator>MSBuild:Compile</Generator>
-	  </MauiXaml>
-	  <MauiXaml Update="Pages\RegistrationPage.xaml">
-	    <Generator>MSBuild:Compile</Generator>
-	  </MauiXaml>
-	  <MauiXaml Update="Popups\ChangedPasswordPopup.xaml">
-	    <Generator>MSBuild:Compile</Generator>
-	  </MauiXaml>
-	  <MauiXaml Update="Popups\EmailCodeVerifPopup.xaml">
-	    <Generator>MSBuild:Compile</Generator>
-	  </MauiXaml>
-	  <MauiXaml Update="Popups\ForgotPassPopup.xaml">
-	    <Generator>MSBuild:Compile</Generator>
-	  </MauiXaml>
-	  <MauiXaml Update="Popups\PrivacyPopup.xaml">
-	    <Generator>MSBuild:Compile</Generator>
-	  </MauiXaml>
-	  <MauiXaml Update="Popups\TermsPopup.xaml">
-	    <Generator>MSBuild:Compile</Generator>
-	  </MauiXaml>
+
+		<Compile Update="Popups\PrivacyPopup.xaml.cs">
+
+			<DependentUpon>PrivacyPopup.xaml</DependentUpon>
+
+		</Compile>
+
 	</ItemGroup>
 
+
+
 	<ItemGroup>
-	  <Folder Include="Models\DTOObjects\Message\" />
+
+		<MauiXaml Update="Pages\ChatListPage.xaml">
+
+			<Generator>MSBuild:Compile</Generator>
+
+		</MauiXaml>
+
+		<MauiXaml Update="Pages\LoginPage.xaml">
+
+			<Generator>MSBuild:Compile</Generator>
+
+		</MauiXaml>
+
+		<MauiXaml Update="Pages\RegistrationPage.xaml">
+
+			<Generator>MSBuild:Compile</Generator>
+
+		</MauiXaml>
+
+		<MauiXaml Update="Popups\ChangedPasswordPopup.xaml">
+
+			<Generator>MSBuild:Compile</Generator>
+
+		</MauiXaml>
+
+		<MauiXaml Update="Popups\EmailCodeVerifPopup.xaml">
+
+			<Generator>MSBuild:Compile</Generator>
+
+		</MauiXaml>
+
+		<MauiXaml Update="Popups\ForgotPassPopup.xaml">
+
+			<Generator>MSBuild:Compile</Generator>
+
+		</MauiXaml>
+
+		<MauiXaml Update="Popups\PrivacyPopup.xaml">
+
+			<Generator>MSBuild:Compile</Generator>
+
+		</MauiXaml>
+
+		<MauiXaml Update="Popups\TermsPopup.xaml">
+
+			<Generator>MSBuild:Compile</Generator>
+
+		</MauiXaml>
+
 	</ItemGroup>
+
+
 
 </Project>

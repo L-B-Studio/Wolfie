@@ -17,7 +17,7 @@ public partial class RegistrationPage : ContentPage
     private readonly AuthState _authstate;
     private readonly HttpClientService _httpClient;
     private readonly DeviceInfoHelper _deviceInfo;
-    private readonly string uri = "auth/registration";
+    private readonly string uri = "auth/registration/";
     public RegistrationPage()
     {
         InitializeComponent();
@@ -40,8 +40,8 @@ public partial class RegistrationPage : ContentPage
     // Event handler for registration button click
     private async void RegistrationButtonClicked(object sender, EventArgs e)
     {
-        string username = NicknameEntry.Text?.Trim();
-        string email = EmailEntry.Text?.Trim();
+        string username = NicknameEntry.Text.Trim();// ?? "no_name";
+        string email = EmailEntry.Text.Trim();// ?? "no_email";
         string createPass = PasswordCreateEntry.Text;
         string againPass = PasswordAgainEntry.Text;
         DateTime birthday = BirthdayDatePicker.Date ?? DateTime.Now;
@@ -116,7 +116,12 @@ public partial class RegistrationPage : ContentPage
             if (booleanResult)
             {
                 await DisplayAlertAsync("Success", "Registration completed successfully!", "Ок");
-                await Shell.Current.GoToAsync(nameof(ChatListPage));
+                try{
+                    await Shell.Current.GoToAsync("//ChatListPage"); }
+                catch (Exception ex)
+                {
+                    await DisplayAlertAsync("Navigation Error", ex.Message, "Ок");
+                }
             }
 
             await Task.Delay(500);
@@ -132,7 +137,7 @@ public partial class RegistrationPage : ContentPage
     {
         if (answer.token_access != null)
         {
-            SecureStorage.SetAsync("token_refresh", answer.token_refresh);
+            await SecureStorage.SetAsync("token_refresh", answer.token_refresh);
             _authstate.AccessToken = answer.token_access;
             return true;
         }
@@ -170,7 +175,7 @@ public partial class RegistrationPage : ContentPage
     // Event handler for back button click
     async void OnBackClicked(object sender, EventArgs e)
     {
-            await Shell.Current.GoToAsync("..");
+            await Shell.Current.GoToAsync("//LoginPage");
 
     }
 

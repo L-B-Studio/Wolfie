@@ -6,8 +6,8 @@ namespace Wolfie.Models.DTOObjects.GetAccess
 {
     public record GetAccessTokenRequest
     {
-        public string Token_refresh { get; init; }
-        public string? Devic_name { get; init; } = null;
+        public string? token_refresh { get; init; } = null;
+        public string? Device_id { get; init; } = null;
         public string? Device_type { get; init; } = null;
         public string? Place_auth { get; init; } = null;
 

@@ -7,7 +7,7 @@ namespace Wolfie.Models.DTOObjects.Login
 {
     public record LoginResponse
     {
-        public string token_refresh { get; init; }
-        public string token_access { get; init; }
+        public string token_refresh { get; init; } = string.Empty;
+        public string token_access { get; init; } = string.Empty;
     }
 }

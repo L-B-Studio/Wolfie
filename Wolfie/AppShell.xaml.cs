@@ -10,15 +10,10 @@ namespace Wolfie
         {
             InitializeComponent();
 
-            Routing.RegisterRoute(nameof(RegistrationPage), typeof(RegistrationPage));
-
-            Routing.RegisterRoute(nameof(LoginPage), typeof(LoginPage));
-
             Routing.RegisterRoute(nameof(ChatListPage), typeof(ChatListPage));
-
+            Routing.RegisterRoute(nameof(RegistrationPage), typeof(RegistrationPage));
             Routing.RegisterRoute(nameof(LoggerDebugPage), typeof(LoggerDebugPage));
 
-            //Routing.RegisterRoute(nameof(MessagePage), typeof(MessagePage));
         }
     }
 }

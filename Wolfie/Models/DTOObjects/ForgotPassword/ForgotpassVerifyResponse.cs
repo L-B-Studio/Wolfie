@@ -6,6 +6,6 @@ namespace Wolfie.Models.DTOObjects.ForgotPassword
 {
     public record ForgotpassVerifyResponse
     {
-        public string token_reset { get; init; }
+        public string token_reset { get; init; } = string.Empty;
     }
 }

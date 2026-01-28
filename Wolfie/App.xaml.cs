@@ -10,6 +10,7 @@ namespace Wolfie
     public partial class App : Application
     {
         private readonly HttpClientService _httpClient;// = new HttpClientService();
+        public static bool IsAppActive { get; private set; }
         public App(IServiceProvider services)
         {
             InitializeComponent();
@@ -17,9 +18,20 @@ namespace Wolfie
 
             _httpClient = services.GetRequiredService<HttpClientService>();
         }
+        protected override void OnStart()
+        {
+            IsAppActive = true;
+        }
 
-        
+        protected override void OnResume()
+        {
+            IsAppActive = true;
+        }
 
+        protected override void OnSleep()
+        {
+            IsAppActive = false;
+        }
 
         protected override Window CreateWindow(IActivationState? activationState)
         {

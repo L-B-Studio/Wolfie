@@ -6,6 +6,7 @@ using Wolfie.Auth;
 using Wolfie.Helpers;
 using Wolfie.Models;
 using Wolfie.Models.DTOObjects;
+using Wolfie.Models.DTOObjects.GetAccess;
 using Wolfie.Models.DTOObjects.Login;
 using Wolfie.Popups;
 using Wolfie.Servers;
@@ -18,36 +19,77 @@ public partial class LoginPage : ContentPage
     private readonly DeviceInfoHelper _deviceInfo;
     private readonly AuthState _authstate;
     private readonly HttpClientService _httpClient;
-    //private readonly AuthState _authState;
     private readonly string uri = "auth/login/";
-    public LoginPage()
+    private readonly string isloggined_uri = "auth/get_access_token/";
+    public LoginPage(DeviceInfoHelper deviceInfo, AuthState authState, HttpClientService httpClient)
     {
         InitializeComponent();
 
-        _authstate = ServiceClientHelper.GetService<AuthState>();
-        _deviceInfo = ServiceClientHelper.GetService<DeviceInfoHelper>();
-        _httpClient = ServiceClientHelper.GetService<HttpClientService>();
+        // Тепер сервіси приходять готові від DI-контейнера
+        _deviceInfo = deviceInfo;
+        _authstate = authState;
+        _httpClient = httpClient;
 
         ApplyTheme();
     }
-
 
     protected override async void OnAppearing()
     {
         base.OnAppearing();
-        ApplyTheme();
 
-        if (_httpClient != null)
-            await _httpClient.InitializeAsync();
+        // Используем задержку, чтобы навигация не конфликтовала с отрисовкой текущей страницы
+        await Task.Delay(100);
+        await CheckAuthAndNavigateAsync();
     }
 
-    //protected override void OnDisappearing()
-    //{
-    //    base.OnDisappearing();
-    //    _httpClient?.Dispose();
-    //}
+    private async Task CheckAuthAndNavigateAsync()
+    {
+        try
+        {
+            var refreshToken = await SecureStorage.GetAsync("token_refresh");
 
-    // Event handler for login button click
+            if (string.IsNullOrWhiteSpace(refreshToken))
+                return;
+
+            await _httpClient.InitializeAsync();
+
+            var dto = new GetAccessTokenRequest
+            {
+                token_refresh = refreshToken,
+                Device_id = _deviceInfo.GetDeviceManufacture(),
+                Device_type = _deviceInfo.GetDeviceType()
+            };
+
+            var response = await _httpClient.GetNewAccessToken(isloggined_uri, dto);
+
+
+            if (response?.token_access != null)
+            {
+                _authstate.AccessToken = response.token_access;
+
+                if (!string.IsNullOrEmpty(response.token_refresh))
+                    await SecureStorage.SetAsync("token_refresh", response.token_refresh);
+
+                // Переключаемся в главный поток ТОЛЬКО для UI операций
+                await MainThread.InvokeOnMainThreadAsync(async () =>
+                {
+                    // Важно: проверьте, существует ли ChatListPage в AppShell.xaml
+                    await Shell.Current.GoToAsync(nameof(ChatListPage));
+                });
+            }
+
+            else
+            {
+                SecureStorage.Remove("token_refresh");
+            }
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"CRITICAL ERROR: {ex}");
+        }
+    }
+
+
     private async void LoginButtonClicked(object sender, EventArgs e)
     {
         string email = EmailEntry.Text.Trim();
@@ -94,10 +136,21 @@ public partial class LoginPage : ContentPage
             }
 
             // Process server response
-            var boleanResult = await CheckAnswerAsync(answer);
+            var boleanResult = await CheckLoginAnswerAsync(answer);
             if (boleanResult)
             {
-                await Shell.Current.GoToAsync(nameof(ChatListPage));
+                await MainThread.InvokeOnMainThreadAsync(async () =>
+                {
+                    await DisplayAlertAsync("Success", "Login completed successfully!", "Ок");
+                    try
+                    {
+                        await Shell.Current.GoToAsync(nameof(ChatListPage));
+                    }
+                    catch (Exception ex)
+                    {
+                        await DisplayAlertAsync("Navigation Error", ex.Message, "Ок");
+                    }
+                });
             }
             await Task.Delay(500);
         }
@@ -108,11 +161,12 @@ public partial class LoginPage : ContentPage
     }
 
     // Method to check server response
-    private async Task<bool> CheckAnswerAsync(LoginResponse answer)
+    private async Task<bool> CheckLoginAnswerAsync(LoginResponse answer)
     {
         if (answer.token_access != null)
         {
-            SecureStorage.SetAsync("token_refresh", answer.token_refresh);
+            System.Diagnostics.Debug.WriteLine($"Refresh_token {answer.token_refresh}");
+            await SecureStorage.SetAsync("token_refresh", answer.token_refresh);
             _authstate.AccessToken = answer.token_access;
             return true;
         }

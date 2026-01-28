@@ -29,8 +29,8 @@ public partial class ChangedPasswordPopup : Popup
     // Event handler for confirm button click
     private async void OnConfirmClicked(object sender, EventArgs e)
     {
-        string newPass = NewPasswordEntry.Text?.Trim();
-        string repeatPass = RepeatPasswordEntry.Text?.Trim();
+        string newPass = NewPasswordEntry.Text.Trim();
+        string repeatPass = RepeatPasswordEntry.Text.Trim();
 
         if (string.IsNullOrWhiteSpace(newPass) || string.IsNullOrWhiteSpace(repeatPass))
         {

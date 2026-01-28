@@ -1,0 +1,11 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<network-security-config>
+    <!-- Разрешаем самоподписанные сертификаты для вашего IP -->
+    <domain-config cleartextTrafficPermitted="false">
+        <domain includeSubdomains="true">141.105.132.149</domain>
+        <trust-anchors>
+            <certificates src="system" />
+            <certificates src="user" />
+        </trust-anchors>
+    </domain-config>
+</network-security-config>

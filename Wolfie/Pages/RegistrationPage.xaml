@@ -3,6 +3,7 @@
              xmlns:sys="clr-namespace:System;assembly=mscorlib"
              xmlns:mct="clr-namespace:CommunityToolkit.Maui.Behaviors;assembly=CommunityToolkit.Maui"
              x:Class="Wolfie.Pages.RegistrationPage"
+             Shell.NavBarIsVisible="False"
              x:Name="MainLayout">
 
     <Shell.BackButtonBehavior>

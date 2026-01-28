@@ -1,121 +1,162 @@
 <?xml version="1.0" encoding="utf-8" ?>
-<ContentPage
-    xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
-    xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
-    xmlns:mct="http://schemas.microsoft.com/dotnet/2022/maui/toolkit"
-    xmlns:viewModels="clr-namespace:Wolfie.ViewModels"
-    x:Class="Wolfie.Pages.ChatListPage"
-    BackgroundColor="#0E1621">
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:mct="http://schemas.microsoft.com/dotnet/2022/maui/toolkit"
+             xmlns:models="clr-namespace:Wolfie.Models"
+             xmlns:pages="clr-namespace:Wolfie.Pages"
+             x:Class="Wolfie.Pages.ChatListPage"
+             x:DataType="pages:ChatListPage"
+             Shell.NavBarIsVisible="False"
+             BackgroundColor="#0B0E14">
 
     <Shell.BackButtonBehavior>
         <BackButtonBehavior IsVisible="False" IsEnabled="False" />
     </Shell.BackButtonBehavior>
 
     <Page.Behaviors>
-        <mct:StatusBarBehavior StatusBarColor="Transparent" />
+        <mct:StatusBarBehavior StatusBarColor="Transparent"/>
     </Page.Behaviors>
 
-    <VerticalStackLayout Padding="10" Spacing="0">
+    <Grid>
+        <Grid ColumnDefinitions="350,*">
 
-        <!-- Burger menu & Поиск -->
-        <Grid ColumnDefinitions="50,*" BackgroundColor="Transparent" Padding="5" ColumnSpacing="0" HeightRequest="60" VerticalOptions="Start">
-            <ImageButton Grid.Column="0"
-                         Source="light_logo.png" 
-                         BackgroundColor="Transparent"
-                         Padding="12"
-                         VerticalOptions="Center"
-                         HorizontalOptions="Center"/>
-            <Entry Grid.Column="1"
-                   Placeholder="Search"
-                   PlaceholderColor="#95A5A6"
-                   TextColor="White"
-                   BackgroundColor="Transparent"
-                   VerticalOptions="Center"
-                   CharacterSpacing="2"
-                   Margin="0,0,10,0" />
-            <ImageButton Grid.Column="0"
-             Source="light_logo.png" 
-             BackgroundColor="Transparent"
-             Padding="12"
-             VerticalOptions="Center"
-             HorizontalOptions="Center"/>
-        </Grid>
+            <Grid x:Name="ChatsPanel" BackgroundColor="#151B27" RowDefinitions="Auto,*">
 
-        <!-- Список чатов -->
-        <CollectionView x:Name="ChatList"
-                        Margin="0,10,0,0"
-                        ItemsSource="{Binding Chats}"
-                        SelectionMode="Single"
-                        SelectionChanged="ChatList_SelectionChanged">
-            <CollectionView.ItemTemplate>
-                <DataTemplate x:DataType="viewModels:ChatItemViewModel">
-                    <Grid x:Name="ContentGrid" 
-              Padding="10" 
-              ColumnDefinitions="60,*,Auto" 
-              RowDefinitions="Auto"
-              BackgroundColor="Transparent">
+                <VerticalStackLayout Padding="15,20,15,10" Spacing="15">
+                    <Grid HeightRequest="60" Padding="12,8" ColumnDefinitions="Auto,*" ColumnSpacing="10" BackgroundColor="Transparent">
 
-                        <VisualStateManager.VisualStateGroups>
-                            <VisualStateGroupList>
-                                <VisualStateGroup x:Name="CommonStates">
+                        <!-- Burger -->
+                        <Border HeightRequest="44" WidthRequest="44" StrokeThickness="0" StrokeShape="RoundRectangle 14" BackgroundColor="#1E2633">
+                            <Button Text="≡" FontSize="20" TextColor="White" BackgroundColor="Transparent" Clicked="ToggleMenu" />
+                        </Border>
 
-                                    <VisualState x:Name="Selected">
-                                        <VisualState.Setters>
-                                            <Setter TargetName="ContentGrid"
-                                        Property="BackgroundColor"
-                                        Value="#4c5e75" />
-                                        </VisualState.Setters>
-                                    </VisualState>
-
-                                    <VisualState x:Name="Normal">
-                                        <VisualState.Setters>
-                                            <Setter TargetName="ContentGrid"
-                                        Property="BackgroundColor"
-                                        Value="Transparent" />
-                                        </VisualState.Setters>
-                                    </VisualState>
-
-                                </VisualStateGroup>
-                            </VisualStateGroupList>
-                        </VisualStateManager.VisualStateGroups>
-
-                        <Image Grid.Column="0"
-                   Source="{Binding ChatAvatarName}"
-                   WidthRequest="50"
-                   HeightRequest="50"
-                   Aspect="AspectFill"
-                   VerticalOptions="Center"
-                   HorizontalOptions="Center"
-                   Margin="0,0,10,0"/>
-
-                        <VerticalStackLayout Grid.Column="1"
-                                 Spacing="2"
-                                 Padding="0">
-                            <Label Text="{Binding ChatTitle}"
-                       TextColor="White"
-                       FontSize="16"
-                       FontAttributes="Bold"/>
-                            <Label Text="{Binding LastMessage}"
-                       TextColor="#90A4AE"
-                       FontSize="13"
-                       LineBreakMode="TailTruncation"/>
-                        </VerticalStackLayout>
-
-                        <VerticalStackLayout Grid.Column="2"
-                                 HorizontalOptions="End"
-                                 VerticalOptions="Center"
-                                 Spacing="6">
-                            <Label Text="{Binding LastTime}"
-                       TextColor="#90A4AE"
-                       FontSize="12"
-                       HorizontalTextAlignment="End"/>
-                        </VerticalStackLayout>
+                        <!-- Search -->
+                        <Border Grid.Column="1" HeightRequest="44" StrokeThickness="0" StrokeShape="RoundRectangle 14" BackgroundColor="#1E2633">
+                            <Grid ColumnDefinitions="32,*" VerticalOptions="Center">
+                                <Label Text="🔎" FontSize="13" TextColor="#7A8596" HorizontalOptions="Center" VerticalOptions="Center" />
+                                <Entry Grid.Column="1" Placeholder="Пошук..." FontSize="14" TextColor="White" PlaceholderColor="#7A8596" BackgroundColor="Transparent" VerticalOptions="Center" Margin="0,0,10,0" TextChanged="OnSearchTextChanged" />
+                            </Grid>
+                        </Border>
 
                     </Grid>
-                </DataTemplate>
-            </CollectionView.ItemTemplate>
-        </CollectionView>
+                </VerticalStackLayout>
 
-    </VerticalStackLayout>
+                <Grid Grid.Row="1">
+                    <CollectionView x:Name="ChatsCollectionView" 
+                                    SelectionMode="Single"
+                                    SelectionChanged="OnChatSelected">
+                        <CollectionView.ItemTemplate>
+                            <DataTemplate x:DataType="models:ChatItemModel">
+                                <Grid Padding="15,10" ColumnDefinitions="Auto,*,Auto" ColumnSpacing="12">
+                                    <Border WidthRequest="50" HeightRequest="50" StrokeShape="RoundRectangle 15" BackgroundColor="#3D5AFE" StrokeThickness="0">
+                                        <Label Text="{Binding ChatTitle}" HorizontalOptions="Center" VerticalOptions="Center" TextColor="White" FontAttributes="Bold"/>
+                                    </Border>
+                                    <VerticalStackLayout Grid.Column="1" VerticalOptions="Center" Spacing="2">
+                                        <Label Text="{Binding ChatTitle}" TextColor="White" FontSize="15" FontAttributes="Bold" MaxLines="1"/>
+                                        <Label Text="{Binding LastMessage}" TextColor="#8E9BAA" FontSize="13" MaxLines="1" LineBreakMode="TailTruncation"/>
+                                    </VerticalStackLayout>
+                                    <Label Grid.Column="2" Text="12:45" FontSize="11" TextColor="#5C6979" VerticalOptions="Start" Margin="0,5,0,0"/>
+                                </Grid>
+                            </DataTemplate>
+                        </CollectionView.ItemTemplate>
+                    </CollectionView>
 
+                    <ActivityIndicator x:Name="ChatsLoadingIndicator" IsRunning="False" VerticalOptions="Center" HorizontalOptions="Center" Color="#3D5AFE"/>
+                </Grid>
+            </Grid>
+
+            <Grid x:Name="MainChatArea" Grid.Column="1" RowDefinitions="70,*,Auto" BackgroundColor="#0B0E14">
+
+                <Grid x:Name="ChatHeader" Padding="20,0" ColumnDefinitions="Auto,*,Auto" IsVisible="False" BackgroundColor="#0F1622">
+                    <HorizontalStackLayout Spacing="12" VerticalOptions="Center">
+                        <Border WidthRequest="40" HeightRequest="40" StrokeShape="RoundRectangle 12" BackgroundColor="#3D5AFE" StrokeThickness="0">
+                            <Label x:Name="HeaderAvatarLabel" HorizontalOptions="Center" VerticalOptions="Center" TextColor="White" FontAttributes="Bold"/>
+                        </Border>
+                        <VerticalStackLayout VerticalOptions="Center">
+                            <Label x:Name="HeaderTitleLabel" TextColor="White" FontAttributes="Bold" FontSize="16"/>
+                            <Label Text="онлайн" TextColor="#4CAF50" FontSize="12"/>
+                        </VerticalStackLayout>
+                    </HorizontalStackLayout>
+                    <BoxView VerticalOptions="End" HeightRequest="1" Color="#222C3D" Grid.ColumnSpan="3"/>
+                </Grid>
+
+                <Grid Grid.Row="1">
+                    <CollectionView x:Name="MessagesCollectionView"
+                                    Margin="20"
+                                    RemainingItemsThreshold="5"
+                                    RemainingItemsThresholdReached="OnLoadMoreMessages"
+                                    VerticalScrollBarVisibility="Never"
+                                    Rotation="180">
+
+                        <CollectionView.ItemTemplate>
+                            <DataTemplate x:DataType="models:MessageItemModel">
+                                <Grid Padding="0,4" Rotation="180">
+                                    <Border BackgroundColor="#1E2633"
+                                                Padding="12,8"
+                                                HorizontalOptions="Start"
+                                                MaximumWidthRequest="400"
+                                                StrokeShape="RoundRectangle 15"
+                                                StrokeThickness="0">
+                                        <Border.Triggers>
+                                            <DataTrigger TargetType="Border" 
+                                                             Binding="{Binding SenderId}" 
+                                                             Value="me">
+                                                <Setter Property="HorizontalOptions" Value="End"/>
+                                                <Setter Property="BackgroundColor" Value="#3D5AFE"/>
+                                            </DataTrigger>
+                                        </Border.Triggers>
+
+                                        <VerticalStackLayout Spacing="4">
+                                            <Label Text="{Binding MessageText}" 
+                                                       TextColor="White"
+                                                       FontSize="14"
+                                                       LineBreakMode="WordWrap"/>
+                                            <Label Text="{Binding CreatedAt}" 
+                                                       TextColor="#8E9BAA"
+                                                       FontSize="11"
+                                                       HorizontalOptions="End"/>
+                                        </VerticalStackLayout>
+                                    </Border>
+                                </Grid>
+                            </DataTemplate>
+                        </CollectionView.ItemTemplate>
+                    </CollectionView>
+
+                    <ActivityIndicator x:Name="MsgLoadingIndicator" 
+                                       IsRunning="False" 
+                                       VerticalOptions="Start" 
+                                       HorizontalOptions="Center" 
+                                       Margin="0,20,0,0" 
+                                       Color="#3D5AFE"/>
+                </Grid>
+
+                <Grid x:Name="InputArea" Grid.Row="2" Padding="15,10,15,30" ColumnDefinitions="Auto,*,Auto" ColumnSpacing="10" IsVisible="False">
+                    <Button Text="📎" BackgroundColor="Transparent" TextColor="#8E9BAA" FontSize="20" WidthRequest="40"/>
+                    <Border Grid.Column="1" BackgroundColor="#1E2633" StrokeThickness="0" StrokeShape="RoundRectangle 15">
+                        <Entry x:Name="MessageEntry" Placeholder="Повідомлення..." TextColor="White" PlaceholderColor="#7A8596" Margin="10,0"/>
+                    </Border>
+                    <Button Grid.Column="2" Text="➤" BackgroundColor="#3D5AFE" CornerRadius="20" WidthRequest="45" HeightRequest="45" Clicked="OnSendMessageClicked"/>
+                </Grid>
+
+                <VerticalStackLayout x:Name="EmptyState" Grid.RowSpan="3" VerticalOptions="Center" HorizontalOptions="Center" Spacing="10">
+                    <Label Text="💬" FontSize="50" HorizontalOptions="Center" Opacity="0.3"/>
+                    <Label Text="Оберіть чат для спілкування" TextColor="#5C6979"/>
+                </VerticalStackLayout>
+            </Grid>
+        </Grid>
+
+        <BoxView x:Name="Overlay" Color="Black" Opacity="0.5" IsVisible="False">
+            <BoxView.GestureRecognizers>
+                <TapGestureRecognizer Tapped="CloseMenu"/>
+            </BoxView.GestureRecognizers>
+        </BoxView>
+
+        <Grid x:Name="BurgerMenu" WidthRequest="280" HorizontalOptions="Start" TranslationX="-280" BackgroundColor="#151B27" Padding="20,50">
+            <VerticalStackLayout Spacing="20">
+                <Label Text="Налаштування" TextColor="White" FontSize="18" FontAttributes="Bold"/>
+                <Button Text="Профіль" BackgroundColor="Transparent" TextColor="White" HorizontalOptions="Start"/>
+                <Button Text="Вихід" BackgroundColor="Transparent" TextColor="#FF5252" HorizontalOptions="Start" Clicked="OnExitClicked"/>
+            </VerticalStackLayout>
+        </Grid>
+    </Grid>
 </ContentPage>
